@@ -26,7 +26,7 @@ export function MDReviewBlock({ review }: { review: MdReview }) {
             <p className="text-xs text-slate-500">
               Physician Founder ·{' '}
               <a
-                href="https://orthoiq.com"
+                href="https://orthoiq.io"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-amber-600 hover:text-amber-500 transition-colors"

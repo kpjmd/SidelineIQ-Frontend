@@ -11,7 +11,7 @@ export function OrthoIQCTA() {
           same physician behind SidelineIQ.
         </p>
         <a
-          href="https://orthoiq.com?ref=sidelineiq"
+          href="https://orthoiq.io?ref=sidelineiq"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-700 hover:bg-blue-600 text-white text-sm font-medium transition-colors mt-2"
