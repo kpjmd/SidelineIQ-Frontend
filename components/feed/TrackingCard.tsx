@@ -42,7 +42,6 @@ export function TrackingCard({ post }: { post: InjuryPost }) {
           <Link
             href={`/post/${post.parent_post_id}`}
             className="text-xs text-amber-500 hover:text-amber-400 transition-colors"
-            onClick={(e) => e.stopPropagation()}
           >
             See original report →
           </Link>
