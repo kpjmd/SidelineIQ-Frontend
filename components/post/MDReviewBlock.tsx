@@ -22,7 +22,7 @@ export function MDReviewBlock({ review }: { review: MdReview }) {
             </svg>
           </div>
           <div>
-            <p className="text-xs font-semibold text-amber-400">Keith Kenter, MD</p>
+            <p className="text-xs font-semibold text-amber-400">KPJMD</p>
             <p className="text-xs text-slate-500">
               Physician Founder ·{' '}
               <a
