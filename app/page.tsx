@@ -8,19 +8,20 @@ import { PostFeed } from '@/components/feed/PostFeed';
 export const revalidate = 60;
 
 interface PageProps {
-  searchParams: Promise<{ sport?: string; type?: string }>;
+  searchParams: Promise<{ sport?: string; type?: string; limit?: string }>;
 }
 
 export default async function FeedPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const sport = params.sport as Sport | undefined;
   const contentType = params.type as ContentType | undefined;
+  const limit = Math.min(Math.max(parseInt(params.limit ?? '20', 10) || 20, 20), 100);
 
   const result = await listPosts({
     status: 'PUBLISHED',
     ...(sport ? { sport } : {}),
     ...(contentType ? { content_type: contentType } : {}),
-    limit: 20,
+    limit,
     offset: 0,
   });
 
@@ -63,6 +64,8 @@ export default async function FeedPage({ searchParams }: PageProps) {
           posts={result.posts}
           hasMore={result.has_more}
           total={result.total}
+          limit={limit}
+          searchParams={params as Record<string, string>}
         />
       </main>
 

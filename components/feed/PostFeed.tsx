@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { InjuryPost } from '@/lib/types';
 import { BreakingCard } from './BreakingCard';
 import { TrackingCard } from './TrackingCard';
@@ -23,9 +24,11 @@ interface PostFeedProps {
   posts: InjuryPost[];
   hasMore: boolean;
   total: number;
+  limit?: number;
+  searchParams?: Record<string, string>;
 }
 
-export function PostFeed({ posts, hasMore, total }: PostFeedProps) {
+export function PostFeed({ posts, hasMore, total, limit = 20, searchParams = {} }: PostFeedProps) {
   if (posts.length === 0) {
     return (
       <div className="text-center py-16 text-slate-500">
@@ -44,8 +47,13 @@ export function PostFeed({ posts, hasMore, total }: PostFeedProps) {
         ))}
       </div>
       {hasMore && (
-        <div className="mt-8 text-center">
-          <p className="text-xs text-slate-500">Scroll or use filters to find more posts.</p>
+        <div className="mt-8 flex justify-center">
+          <Link
+            href={`?${new URLSearchParams({ ...searchParams, limit: String(limit + 20) })}`}
+            className="px-6 py-2 rounded-md bg-slate-800 text-slate-300 text-sm hover:bg-slate-700 transition-colors"
+          >
+            Load More
+          </Link>
         </div>
       )}
     </div>

@@ -35,6 +35,30 @@ export function BreakingCard({ post }: { post: InjuryPost }) {
         </div>
       </Link>
       <div className="px-5 pb-4">
+        {(post.farcaster_hash || post.twitter_id) && (
+          <div className="flex gap-3 mb-2 text-xs text-slate-500">
+            {post.farcaster_hash && (
+              <a
+                href={`https://warpcast.com/~/conversations/${post.farcaster_hash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-purple-400 transition-colors"
+              >
+                Farcaster ↗
+              </a>
+            )}
+            {post.twitter_id && (
+              <a
+                href={`https://x.com/i/web/status/${post.twitter_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-sky-400 transition-colors"
+              >
+                X ↗
+              </a>
+            )}
+          </div>
+        )}
         <OTMSignature />
       </div>
     </article>
