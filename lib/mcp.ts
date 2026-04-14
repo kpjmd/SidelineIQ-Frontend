@@ -46,6 +46,20 @@ export async function listMdReviews(status?: MdReviewStatus): Promise<MdReview[]
   return result.reviews;
 }
 
+export async function approveInjuryPost(postId: string) {
+  return callMCPTool<{ approved: boolean; post: InjuryPost }>(
+    'web_approve_injury_post',
+    { post_id: postId },
+  );
+}
+
+export async function deleteInjuryPost(postId: string) {
+  return callMCPTool<{ deleted: boolean; post_id: string }>(
+    'web_delete_injury_post',
+    { post_id: postId },
+  );
+}
+
 export async function updateMdReview(
   id: string,
   status: 'APPROVED' | 'REJECTED',

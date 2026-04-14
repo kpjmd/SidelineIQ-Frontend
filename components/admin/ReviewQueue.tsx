@@ -21,11 +21,44 @@ interface Props {
 export function ReviewQueue({ initialReviews, adminSecret }: Props) {
   const [reviews, setReviews] = useState(initialReviews);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [actionInProgress, setActionInProgress] = useState<string | null>(null);
 
   function handleUpdate(updated: MdReview) {
     setReviews((prev) =>
       prev.map((r) => (r.id === updated.id ? { ...r, ...updated } : r)),
     );
+  }
+
+  async function handleQuickApprove(review: MdReview) {
+    setActionInProgress(review.id);
+    try {
+      const res = await fetch(`/api/admin/approve/${review.post_id}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${adminSecret}` },
+      });
+      if (!res.ok) throw new Error('Failed to approve');
+      setReviews((prev) => prev.filter((r) => r.id !== review.id));
+    } catch (err) {
+      console.error('Quick approve failed:', err);
+    } finally {
+      setActionInProgress(null);
+    }
+  }
+
+  async function handleQuickReject(review: MdReview) {
+    setActionInProgress(review.id);
+    try {
+      const res = await fetch(`/api/admin/reject/${review.post_id}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${adminSecret}` },
+      });
+      if (!res.ok) throw new Error('Failed to reject');
+      setReviews((prev) => prev.filter((r) => r.id !== review.id));
+    } catch (err) {
+      console.error('Quick reject failed:', err);
+    } finally {
+      setActionInProgress(null);
+    }
   }
 
   const pending = reviews.filter((r) => r.status === 'PENDING');
@@ -61,11 +94,34 @@ export function ReviewQueue({ initialReviews, adminSecret }: Props) {
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
+                {review.reason && /confidence\s+([\d.]+)/.test(review.reason) && (
+                  <span className="text-xs text-slate-500 tabular-nums">
+                    {(parseFloat(review.reason.match(/confidence\s+([\d.]+)/)?.[1] ?? '0') * 100).toFixed(0)}%
+                  </span>
+                )}
                 <span
                   className={`px-2 py-0.5 rounded text-xs font-medium border ${STATUS_BADGE[review.status] ?? STATUS_BADGE.PENDING}`}
                 >
                   {review.status}
                 </span>
+                {review.status === 'PENDING' && (
+                  <div className="flex gap-1.5" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => handleQuickApprove(review)}
+                      disabled={actionInProgress === review.id}
+                      className="px-3 py-1 text-xs font-medium rounded bg-green-700 text-green-100 hover:bg-green-600 disabled:opacity-50 transition-colors"
+                    >
+                      {actionInProgress === review.id ? '...' : 'Approve'}
+                    </button>
+                    <button
+                      onClick={() => handleQuickReject(review)}
+                      disabled={actionInProgress === review.id}
+                      className="px-3 py-1 text-xs font-medium rounded bg-red-900 text-red-200 hover:bg-red-800 disabled:opacity-50 transition-colors"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                )}
                 <time className="text-xs text-slate-600">
                   {formatDistanceToNow(new Date(review.created_at), { addSuffix: true })}
                 </time>
