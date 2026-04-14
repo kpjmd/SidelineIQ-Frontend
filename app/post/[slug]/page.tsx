@@ -16,7 +16,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!post) return { title: 'Not Found | SidelineIQ' };
 
   const title = `${post.athlete_name} ${post.injury_type} Injury Update | SidelineIQ`;
-  const description = post.clinical_summary.replace(/[#*_`]/g, '').slice(0, 160);
+  const description = post.clinical_summary
+    .replace(/\[([A-Z][A-Z\s/]+):[^\]]*\]/g, '')
+    .replace(/[#*_`]/g, '')
+    .slice(0, 160);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://sidelineiq.com';
 
   return {

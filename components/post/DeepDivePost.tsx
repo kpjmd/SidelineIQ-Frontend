@@ -9,6 +9,7 @@ import { ConflictGapDisplay } from './ConflictGapDisplay';
 import { MDReviewBlock } from './MDReviewBlock';
 import { OrthoIQCTA } from './OrthoIQCTA';
 import { markdownComponents } from '@/lib/markdown-components';
+import { stripOTMAnnotations } from '@/lib/strip-otm';
 
 interface Props {
   post: InjuryPost;
@@ -86,7 +87,7 @@ export function DeepDivePost({ post, approvedReview }: Props) {
       {/* Clinical summary markdown */}
       <div className="prose-custom">
         <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-          {post.clinical_summary}
+          {stripOTMAnnotations(post.clinical_summary)}
         </ReactMarkdown>
       </div>
 

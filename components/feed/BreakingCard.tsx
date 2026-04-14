@@ -4,9 +4,10 @@ import type { InjuryPost } from '@/lib/types';
 import { SportBadge } from '@/components/shared/SportBadge';
 import { ContentTypeBadge } from '@/components/shared/ContentTypeBadge';
 import { OTMSignature } from '@/components/shared/OTMSignature';
+import { stripForPreview } from '@/lib/strip-otm';
 
 export function BreakingCard({ post }: { post: InjuryPost }) {
-  const preview = post.clinical_summary.slice(0, 200).replace(/[#*_`]/g, '').trim();
+  const preview = stripForPreview(post.clinical_summary).slice(0, 200);
   const slug = post.slug ?? post.id;
 
   return (
