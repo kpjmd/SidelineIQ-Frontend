@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { approveInjuryPost } from '@/lib/mcp';
 import { revalidatePath } from 'next/cache';
 
@@ -20,14 +20,20 @@ export async function POST(
   try {
     const result = await approveInjuryPost(postId);
 
-    // Fire-and-forget to agents backend for social publishing
-    // Don't await — approval is already done, social publish is best-effort
-    const agentsUrl = process.env.AGENTS_URL ?? 'https://sidelineiq-agents-production.up.railway.app';
-    fetch(`${agentsUrl}/admin/approve/${postId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ post: result.post }),
-    }).catch((err) => console.error('[Approve] Failed to trigger social publish:', err));
+    // Notify agents backend for social publishing after response is sent
+    // after() keeps the serverless function alive so the fetch actually completes
+    after(async () => {
+      const agentsUrl = process.env.AGENTS_URL ?? 'https://sidelineiq-agents-production.up.railway.app';
+      try {
+        await fetch(`${agentsUrl}/admin/approve/${postId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ post: result.post ?? result }),
+        });
+      } catch (err) {
+        console.error('[Approve] Failed to trigger social publish:', err);
+      }
+    });
 
     revalidatePath('/post/[slug]', 'page');
     revalidatePath('/');
