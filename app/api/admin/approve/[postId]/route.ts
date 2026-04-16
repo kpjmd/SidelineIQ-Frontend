@@ -22,12 +22,16 @@ export async function POST(
 
     // Notify agents backend for social publishing (awaited — admin action, latency acceptable)
     const agentsUrl = process.env.AGENTS_URL ?? 'https://sidelineiq-agents-production.up.railway.app';
+    const socialUrl = `${agentsUrl}/admin/approve/${postId}`;
+    console.log('[Approve] Sending social publish to:', socialUrl);
     try {
-      await fetch(`${agentsUrl}/admin/approve/${postId}`, {
+      const socialRes = await fetch(socialUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ post: result.post ?? result }),
       });
+      const socialBody = await socialRes.text();
+      console.log(`[Approve] Social publish response: ${socialRes.status} ${socialBody}`);
     } catch (err) {
       console.error('[Approve] Failed to trigger social publish:', err);
     }
