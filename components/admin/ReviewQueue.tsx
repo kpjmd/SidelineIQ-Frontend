@@ -22,11 +22,42 @@ export function ReviewQueue({ initialReviews, adminSecret }: Props) {
   const [reviews, setReviews] = useState(initialReviews);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+  // Promote is additive — the review stays open. Track promoted post_ids locally
+  // to swap the button for a "Promoted ✓" badge, and surface per-row errors.
+  const [promotedIds, setPromotedIds] = useState<Set<string>>(new Set());
+  const [promoteError, setPromoteError] = useState<Record<string, string>>({});
 
   function handleUpdate(updated: MdReview) {
     setReviews((prev) =>
       prev.map((r) => (r.id === updated.id ? { ...r, ...updated } : r)),
     );
+  }
+
+  async function handlePromote(review: MdReview) {
+    setActionInProgress(review.id);
+    setPromoteError((prev) => {
+      const next = { ...prev };
+      delete next[review.id];
+      return next;
+    });
+    try {
+      const res = await fetch(`/api/admin/promote/${review.post_id}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${adminSecret}` },
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string; score?: number };
+      if (!res.ok) {
+        throw new Error(data.error ?? 'Failed to promote');
+      }
+      setPromotedIds((prev) => new Set(prev).add(review.id));
+    } catch (err) {
+      setPromoteError((prev) => ({
+        ...prev,
+        [review.id]: err instanceof Error ? err.message : 'Failed to promote',
+      }));
+    } finally {
+      setActionInProgress(null);
+    }
   }
 
   async function handleQuickApprove(review: MdReview) {
@@ -120,6 +151,20 @@ export function ReviewQueue({ initialReviews, adminSecret }: Props) {
                     >
                       Reject
                     </button>
+                    {promotedIds.has(review.id) ? (
+                      <span className="px-3 py-1 text-xs font-medium rounded bg-indigo-900/60 text-indigo-300 border border-indigo-700">
+                        Promoted ✓
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handlePromote(review)}
+                        disabled={actionInProgress === review.id}
+                        title="Propose this post to the Injury Desk (does not affect the review)"
+                        className="px-3 py-1 text-xs font-medium rounded bg-indigo-800 text-indigo-100 hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                      >
+                        {actionInProgress === review.id ? '...' : 'Promote'}
+                      </button>
+                    )}
                   </div>
                 )}
                 <time className="text-xs text-slate-600">
@@ -135,6 +180,12 @@ export function ReviewQueue({ initialReviews, adminSecret }: Props) {
                 </svg>
               </div>
             </button>
+
+            {promoteError[review.id] && (
+              <p className="px-4 pb-3 -mt-1 text-xs text-red-400">
+                Promote failed: {promoteError[review.id]}
+              </p>
+            )}
 
             {isExpanded && (
               <div className="px-4 pb-4 border-t border-slate-800">
