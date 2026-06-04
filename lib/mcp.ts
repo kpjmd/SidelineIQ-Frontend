@@ -1,6 +1,15 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import type { FeedResponse, InjuryPost, ListPostsFilters, MdReview, MdReviewStatus } from './types';
+import type {
+  CandidateDecision,
+  CandidateListItem,
+  CandidateStatus,
+  FeedResponse,
+  InjuryPost,
+  ListPostsFilters,
+  MdReview,
+  MdReviewStatus,
+} from './types';
 
 const WEB_MCP_URL = process.env.WEB_MCP_URL!;
 
@@ -26,9 +35,31 @@ export async function listPosts(filters: ListPostsFilters = {}): Promise<FeedRes
   if (filters.sport) args.sport = filters.sport;
   if (filters.content_type) args.content_type = filters.content_type;
   if (filters.status) args.status = filters.status;
+  if (filters.athlete_name) args.athlete_name = filters.athlete_name;
   if (filters.limit !== undefined) args.limit = filters.limit;
   if (filters.offset !== undefined) args.offset = filters.offset;
   return callMCPTool<FeedResponse>('web_list_posts', args);
+}
+
+// ── Injury Desk promotion candidates (Phase 1) ───────────────────────────────
+
+export async function listCandidates(status?: CandidateStatus): Promise<CandidateListItem[]> {
+  const args: Record<string, unknown> = {};
+  if (status) args.status = status;
+  const result = await callMCPTool<{ candidates: CandidateListItem[] }>('web_list_candidates', args);
+  return result.candidates;
+}
+
+export async function decideCandidate(
+  candidateId: string,
+  decision: CandidateDecision,
+  decidedBy = 'md',
+): Promise<{ candidate: CandidateListItem }> {
+  return callMCPTool<{ candidate: CandidateListItem }>('web_decide_candidate', {
+    candidate_id: candidateId,
+    decision,
+    decided_by: decidedBy,
+  });
 }
 
 export async function getPostBySlug(slug: string): Promise<InjuryPost | null> {

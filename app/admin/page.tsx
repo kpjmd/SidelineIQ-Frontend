@@ -2,16 +2,35 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import type { MdReview } from '@/lib/types';
+import type { CandidateListItem, MdReview } from '@/lib/types';
 import { ReviewQueue } from '@/components/admin/ReviewQueue';
+import { PostBrowser } from '@/components/admin/PostBrowser';
+import { CandidatesQueue } from '@/components/admin/CandidatesQueue';
+
+type Tab = 'reviews' | 'promote' | 'candidates';
 
 export default function AdminPage() {
   const [secret, setSecret] = useState('');
   const [inputSecret, setInputSecret] = useState('');
   const [reviews, setReviews] = useState<MdReview[]>([]);
+  const [candidates, setCandidates] = useState<CandidateListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authed, setAuthed] = useState(false);
+  const [tab, setTab] = useState<Tab>('reviews');
+
+  const fetchCandidates = useCallback(async (token: string) => {
+    try {
+      const res = await fetch('/api/admin/candidates?status=PROPOSED', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { candidates: CandidateListItem[] };
+      setCandidates(data.candidates);
+    } catch {
+      // Candidates are secondary — a failure here shouldn't block the queue.
+    }
+  }, []);
 
   const fetchReviews = useCallback(async (token: string) => {
     setLoading(true);
@@ -32,12 +51,13 @@ export default function AdminPage() {
       if (typeof sessionStorage !== 'undefined') {
         sessionStorage.setItem('admin_secret', token);
       }
+      fetchCandidates(token);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchCandidates]);
 
   // Restore session secret on mount
   useEffect(() => {
@@ -52,6 +72,10 @@ export default function AdminPage() {
     e.preventDefault();
     setSecret(inputSecret);
     fetchReviews(inputSecret);
+  }
+
+  function handleRefresh() {
+    fetchReviews(secret);
   }
 
   if (!authed) {
@@ -109,23 +133,52 @@ export default function AdminPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Review Queue</h1>
-            <p className="text-sm text-slate-500 mt-1">
-              {reviews.filter((r) => r.status === 'PENDING').length} pending · {reviews.length} total
-            </p>
-          </div>
-          <button
-            onClick={() => fetchReviews(secret)}
-            disabled={loading}
-            className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
-          >
-            {loading ? 'Loading…' : 'Refresh'}
-          </button>
-        </div>
+        <nav className="flex items-center gap-1 mb-6 border-b border-slate-800">
+          {([
+            ['reviews', `Reviews · ${reviews.filter((r) => r.status === 'PENDING').length}`],
+            ['promote', 'Promote'],
+            ['candidates', `Candidates · ${candidates.length}`],
+          ] as [Tab, string][]).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                tab === key
+                  ? 'border-amber-500 text-white'
+                  : 'border-transparent text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+          {tab === 'reviews' && (
+            <button
+              onClick={handleRefresh}
+              disabled={loading}
+              className="ml-auto text-xs text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              {loading ? 'Loading…' : 'Refresh'}
+            </button>
+          )}
+          {tab === 'candidates' && (
+            <button
+              onClick={() => fetchCandidates(secret)}
+              className="ml-auto text-xs text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              Refresh
+            </button>
+          )}
+        </nav>
 
-        <ReviewQueue initialReviews={reviews} adminSecret={secret} />
+        {tab === 'reviews' && <ReviewQueue initialReviews={reviews} adminSecret={secret} />}
+        {tab === 'promote' && <PostBrowser adminSecret={secret} />}
+        {tab === 'candidates' && (
+          <CandidatesQueue
+            key={candidates.map((c) => c.id).join(',')}
+            initialCandidates={candidates}
+            adminSecret={secret}
+          />
+        )}
       </main>
     </div>
   );

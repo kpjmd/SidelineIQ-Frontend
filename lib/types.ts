@@ -62,6 +62,35 @@ export interface ListPostsFilters {
   sport?: Sport;
   content_type?: ContentType;
   status?: PostStatus;
+  athlete_name?: string;
   limit?: number;
   offset?: number;
+}
+
+// ── Injury Desk promotion candidates (Phase 1) ───────────────────────────────
+
+export type Laterality = 'LEFT' | 'RIGHT' | 'BILATERAL' | 'UNSPECIFIED';
+export type CandidateStatus = 'PROPOSED' | 'ACCEPTED' | 'DISMISSED' | 'PROMOTED';
+export type CandidateDecision = 'ACCEPTED' | 'DISMISSED';
+
+// Row returned by web_list_candidates — the desk_candidates row joined to
+// athlete / entity / source-post display fields.
+export interface CandidateListItem {
+  id: string;
+  entity_id: string;
+  source_post_id: string | null;
+  promotion_score: number;
+  reasons: string[] | null;
+  status: CandidateStatus;
+  proposed_at: string;
+  decided_at: string | null;
+  decided_by: string | null;
+  // Joined display fields
+  athlete_name: string | null;
+  sport: Sport | null;
+  body_part: string | null;
+  laterality: Laterality | null;
+  injury_type: string | null;
+  headline: string | null;
+  slug: string | null;
 }
