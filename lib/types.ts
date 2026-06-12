@@ -4,6 +4,18 @@ export type ContentType = 'BREAKING' | 'TRACKING' | 'DEEP_DIVE' | 'CONFLICT_FLAG
 export type PostStatus = 'PUBLISHED' | 'PENDING_REVIEW' | 'DRAFT';
 export type MdReviewStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
+// ── Auth / identity (Phase 2 foundation) ─────────────────────────────────────
+export type UserRole = 'md' | 'editor';
+
+// Shape returned by the web_get_user / web_get_user_by_email MCP tools.
+export interface DeskUser {
+  id: string;
+  email: string;
+  role: UserRole;
+  name: string | null;
+  created_at: string;
+}
+
 export interface InjuryPost {
   id: string;
   athlete_name: string;
