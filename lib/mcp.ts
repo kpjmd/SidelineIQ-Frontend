@@ -4,6 +4,7 @@ import type {
   CandidateDecision,
   CandidateListItem,
   CandidateStatus,
+  DeskUser,
   FeedResponse,
   InjuryPost,
   ListPostsFilters,
@@ -99,4 +100,50 @@ export async function updateMdReview(
   const args: Record<string, unknown> = { id, status };
   if (reviewerNotes) args.reviewer_notes = reviewerNotes;
   return callMCPTool<MdReview & { post_updated: boolean }>('web_update_md_review', args);
+}
+
+// ── Auth / identity (Phase 2 foundation) ─────────────────────────────────────
+// These back the NextAuth MCP-proxied adapter (lib/auth-adapter.ts) so the
+// frontend never touches Neon directly. The users + verification_token tables
+// are owned by the mcp repo (migration 012_auth.sql).
+
+export interface VerificationTokenRecord {
+  identifier: string;
+  token: string;
+  expires: string; // ISO 8601
+}
+
+export async function getUser(id: string): Promise<DeskUser | null> {
+  const result = await callMCPTool<{ user: DeskUser | null }>('web_get_user', {
+    user_id: id,
+  });
+  return result.user;
+}
+
+export async function getUserByEmail(email: string): Promise<DeskUser | null> {
+  const result = await callMCPTool<{ user: DeskUser | null }>('web_get_user_by_email', {
+    email,
+  });
+  return result.user;
+}
+
+export async function createVerificationToken(
+  input: VerificationTokenRecord,
+): Promise<VerificationTokenRecord> {
+  const result = await callMCPTool<{ verification_token: VerificationTokenRecord }>(
+    'web_create_verification_token',
+    { identifier: input.identifier, token: input.token, expires: input.expires },
+  );
+  return result.verification_token;
+}
+
+export async function useVerificationToken(
+  identifier: string,
+  token: string,
+): Promise<VerificationTokenRecord | null> {
+  const result = await callMCPTool<{ verification_token: VerificationTokenRecord | null }>(
+    'web_use_verification_token',
+    { identifier, token },
+  );
+  return result.verification_token;
 }
