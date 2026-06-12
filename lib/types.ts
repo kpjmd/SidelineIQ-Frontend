@@ -41,6 +41,9 @@ export interface InjuryPost {
   md_review_confidence: number | null;
   conflict_reason: string | null;
   team_timeline_weeks: number | null;
+  // Legacy fact-sweep tracking (web_get_post returns these; FactValidationPanel reads them).
+  corrected_at?: string | null;
+  correction_count?: number | null;
   version: number;
   parent_post_id: string | null;
   slug: string | null;
@@ -105,4 +108,140 @@ export interface CandidateListItem {
   injury_type: string | null;
   headline: string | null;
   slug: string | null;
+}
+
+// ── Injury entities + timeline (Phase 0 / read tools added in 2E) ────────────
+
+export type EntityStatus = 'ACTIVE' | 'RESOLVED' | 'RETIRED';
+export type UpdateKind =
+  | 'INITIAL'
+  | 'TRACKING'
+  | 'CONFLICT'
+  | 'DEEP_DIVE'
+  | 'CORRECTION'
+  | 'RESOLUTION';
+
+// Shape returned by web_get_entity.
+export interface InjuryEntity {
+  id: string;
+  player_id: string;
+  body_part: string | null;
+  laterality: Laterality;
+  injury_type: string | null;
+  status: EntityStatus;
+  canonical_post_id: string | null;
+  first_reported_at: string;
+  last_updated_at: string;
+  actual_return_date: string | null;
+}
+
+// Shape returned (newest-first) by web_list_injury_updates.
+export interface InjuryUpdate {
+  id: string;
+  entity_id: string;
+  post_id: string | null;
+  update_kind: UpdateKind;
+  severity_at_time: string | null;
+  team_timeline_weeks: number | null;
+  otm_min_weeks: number | null;
+  source_url: string | null;
+  description: string | null;
+  created_at: string;
+}
+
+// ── Injury Desk (Tier 2) — desk posts, attestations, lint, publish gate ──────
+// Mirror the mcp client.ts shapes field-for-field so JSON parses cleanly.
+
+export type DeskPostStatus = 'DRAFT' | 'READY' | 'PUBLISHED' | 'RETRACTED';
+
+export interface DeskPost {
+  id: string;
+  candidate_id: string | null;
+  entity_id: string;
+  slug: string;
+  title: string;
+  markdown_body: string;
+  draft_json: unknown;
+  status: DeskPostStatus;
+  version: number;
+  author_id: string | null;
+  reviewed_by: string | null;
+  attestation_id: string | null;
+  content_hash: string;
+  source_attribution: unknown;
+  disclaimer_present: boolean;
+  created_at: string;
+  updated_at: string;
+  published_at: string | null;
+}
+
+// desk_list rows — DeskPost joined to athlete/injury display fields.
+export interface DeskPostListItem extends DeskPost {
+  athlete_name: string | null;
+  sport: string | null;
+  body_part: string | null;
+  laterality: Laterality | null;
+  injury_type: string | null;
+}
+
+export interface DeskAttestation {
+  id: string;
+  desk_post_id: string;
+  reviewer_user_id: string;
+  reviewed_source_reports: boolean;
+  edited_for_accuracy: boolean;
+  framing_confirmed: boolean;
+  content_hash: string;
+  timestamp: string;
+  ip: string | null;
+}
+
+// desk_get payload — post + its attestations (newest-first).
+export interface DeskPostDetail {
+  post: DeskPost;
+  attestations: DeskAttestation[];
+}
+
+export type LintSeverity = 'warning' | 'blocker';
+
+export interface LintSpan {
+  start: number;
+  end: number;
+}
+
+export interface LintFinding {
+  code: string;
+  message: string;
+  severity: LintSeverity;
+  span?: LintSpan;
+}
+
+// desk_lint payload. Only `blockers` gate publish; `classifier_unavailable`
+// always arrives as a warning (the linter fails open).
+export interface LintResult {
+  warnings: LintFinding[];
+  blockers: LintFinding[];
+}
+
+// The structured outcome of the publish gate. A blocked publish is a SUCCESSFUL
+// MCP call with published:false — the route handler maps it to HTTP 422.
+export interface PublishGate {
+  role_ok: boolean;
+  hash_match: boolean;
+  blockers: LintFinding[];
+  passed: boolean;
+  reasons: string[];
+}
+
+export interface PublishResult {
+  published: boolean;
+  gate: PublishGate;
+  post: DeskPost | null;
+}
+
+// Frontend-only aggregate for the read-only Injury Desk context panels.
+export interface DeskContext {
+  entity: InjuryEntity | null;
+  canonicalPost: InjuryPost | null;
+  updates: InjuryUpdate[];
 }
