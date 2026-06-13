@@ -4,12 +4,21 @@ import type {
   CandidateDecision,
   CandidateListItem,
   CandidateStatus,
+  DeskAttestation,
+  DeskPost,
+  DeskPostDetail,
+  DeskPostListItem,
+  DeskPostStatus,
   DeskUser,
   FeedResponse,
+  InjuryEntity,
   InjuryPost,
+  InjuryUpdate,
+  LintResult,
   ListPostsFilters,
   MdReview,
   MdReviewStatus,
+  PublishResult,
 } from './types';
 
 const WEB_MCP_URL = process.env.WEB_MCP_URL!;
@@ -146,4 +155,130 @@ export async function useVerificationToken(
     { identifier, token },
   );
   return result.verification_token;
+}
+
+// ── Injury Desk (Phase 2E) ───────────────────────────────────────────────────
+// Tier 2 physician editorial tools. Every desk_* call MUST originate in a
+// server-side route handler that sources reviewer_user_id / author_id /
+// edited_by from the NextAuth session (session.user.id) — never the request
+// body. The browser never holds WEB_MCP_URL.
+
+export async function deskList(
+  status?: DeskPostStatus,
+  limit?: number,
+): Promise<DeskPostListItem[]> {
+  const args: Record<string, unknown> = {};
+  if (status) args.status = status;
+  if (limit !== undefined) args.limit = limit;
+  const result = await callMCPTool<{ posts: DeskPostListItem[] }>('desk_list', args);
+  return result.posts;
+}
+
+export async function deskGet(deskPostId: string): Promise<DeskPostDetail> {
+  return callMCPTool<DeskPostDetail>('desk_get', { desk_post_id: deskPostId });
+}
+
+export interface CreateDraftInput {
+  candidate_id: string;
+  author_id: string;
+  title: string;
+  markdown_body: string;
+  draft_json?: unknown;
+  source_attribution?: unknown;
+  disclaimer_present?: boolean;
+}
+
+export async function deskCreateDraft(input: CreateDraftInput): Promise<DeskPost> {
+  const result = await callMCPTool<{ post: DeskPost }>('desk_create_draft', { ...input });
+  return result.post;
+}
+
+export interface UpdateDraftInput {
+  desk_post_id: string;
+  edited_by: string;
+  markdown_body: string;
+  title?: string;
+  draft_json?: unknown;
+  source_attribution?: unknown;
+  disclaimer_present?: boolean;
+  edit_diff?: unknown;
+}
+
+export async function deskUpdateDraft(input: UpdateDraftInput): Promise<DeskPost> {
+  const result = await callMCPTool<{ post: DeskPost }>('desk_update_draft', { ...input });
+  return result.post;
+}
+
+export async function deskLint(deskPostId: string): Promise<LintResult> {
+  return callMCPTool<LintResult>('desk_lint', { desk_post_id: deskPostId });
+}
+
+export interface AttestInput {
+  desk_post_id: string;
+  reviewer_user_id: string;
+  reviewed_source_reports: boolean;
+  edited_for_accuracy: boolean;
+  framing_confirmed: boolean;
+  ip?: string;
+}
+
+export async function deskAttest(input: AttestInput): Promise<DeskAttestation> {
+  const result = await callMCPTool<{ attestation: DeskAttestation }>('desk_attest', { ...input });
+  return result.attestation;
+}
+
+// A blocked publish is a SUCCESSFUL call ({published:false, gate}) — do NOT
+// treat it as an error; the route handler maps published:false to HTTP 422.
+export async function deskPublish(
+  deskPostId: string,
+  reviewerUserId: string,
+): Promise<PublishResult> {
+  return callMCPTool<PublishResult>('desk_publish', {
+    desk_post_id: deskPostId,
+    reviewer_user_id: reviewerUserId,
+  });
+}
+
+export async function deskRetract(
+  deskPostId: string,
+  reviewerUserId: string,
+): Promise<{ post: DeskPost }> {
+  return callMCPTool<{ post: DeskPost }>('desk_retract', {
+    desk_post_id: deskPostId,
+    reviewer_user_id: reviewerUserId,
+  });
+}
+
+// ── Read tools backing the Injury Desk context panels (mcp PR A) ─────────────
+// These degrade gracefully (null / empty) so the context route still returns if
+// PR A is mid-deploy.
+
+export async function getEntity(entityId: string): Promise<InjuryEntity | null> {
+  try {
+    const result = await callMCPTool<{ entity: InjuryEntity }>('web_get_entity', {
+      entity_id: entityId,
+    });
+    return result.entity;
+  } catch {
+    return null;
+  }
+}
+
+export async function getPostById(postId: string): Promise<InjuryPost | null> {
+  try {
+    return await callMCPTool<InjuryPost>('web_get_post', { post_id: postId });
+  } catch {
+    return null;
+  }
+}
+
+export async function listInjuryUpdates(entityId: string): Promise<InjuryUpdate[]> {
+  try {
+    const result = await callMCPTool<{ updates: InjuryUpdate[] }>('web_list_injury_updates', {
+      entity_id: entityId,
+    });
+    return result.updates;
+  } catch {
+    return [];
+  }
 }
