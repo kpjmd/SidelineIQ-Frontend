@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { deleteInjuryPost } from '@/lib/mcp';
+import { requireMd } from '@/lib/desk-auth';
 import { revalidatePath } from 'next/cache';
 
-function checkAuth(request: NextRequest): boolean {
-  const auth = request.headers.get('Authorization');
-  return auth === `Bearer ${process.env.ADMIN_SECRET}`;
-}
-
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ postId: string }> },
 ) {
-  if (!checkAuth(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const gate = await requireMd();
+  if (!gate.ok) return gate.response;
 
   const { postId } = await params;
 

@@ -8,7 +8,6 @@ import { SportBadge } from '@/components/shared/SportBadge';
 
 interface Props {
   initialCandidates: CandidateListItem[];
-  adminSecret: string;
 }
 
 function scoreColor(score: number): string {
@@ -20,7 +19,7 @@ function scoreColor(score: number): string {
 // Triage queue for the Injury Desk Candidates tab. Lists PROPOSED candidates
 // (already score-desc from the backend). Accept parks the candidate for Phase 2
 // desk authoring; Dismiss closes it. Both are audited server-side.
-export function CandidatesQueue({ initialCandidates, adminSecret }: Props) {
+export function CandidatesQueue({ initialCandidates }: Props) {
   const [candidates, setCandidates] = useState(initialCandidates);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
@@ -36,7 +35,7 @@ export function CandidatesQueue({ initialCandidates, adminSecret }: Props) {
     try {
       const res = await fetch(`/api/admin/candidates/${candidate.id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminSecret}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ decision }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };

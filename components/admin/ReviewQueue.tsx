@@ -15,10 +15,9 @@ const STATUS_BADGE: Record<string, string> = {
 
 interface Props {
   initialReviews: MdReview[];
-  adminSecret: string;
 }
 
-export function ReviewQueue({ initialReviews, adminSecret }: Props) {
+export function ReviewQueue({ initialReviews }: Props) {
   const [reviews, setReviews] = useState(initialReviews);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
@@ -43,7 +42,6 @@ export function ReviewQueue({ initialReviews, adminSecret }: Props) {
     try {
       const res = await fetch(`/api/admin/promote/${review.post_id}`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${adminSecret}` },
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string; score?: number };
       if (!res.ok) {
@@ -65,7 +63,6 @@ export function ReviewQueue({ initialReviews, adminSecret }: Props) {
     try {
       const res = await fetch(`/api/admin/approve/${review.post_id}`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${adminSecret}` },
       });
       if (!res.ok) throw new Error('Failed to approve');
       setReviews((prev) => prev.filter((r) => r.id !== review.id));
@@ -81,7 +78,6 @@ export function ReviewQueue({ initialReviews, adminSecret }: Props) {
     try {
       const res = await fetch(`/api/admin/reject/${review.post_id}`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${adminSecret}` },
       });
       if (!res.ok) throw new Error('Failed to reject');
       setReviews((prev) => prev.filter((r) => r.id !== review.id));
@@ -206,7 +202,6 @@ export function ReviewQueue({ initialReviews, adminSecret }: Props) {
                   {review.status === 'PENDING' && (
                     <MDReviewForm
                       review={review}
-                      adminSecret={adminSecret}
                       onUpdate={handleUpdate}
                     />
                   )}

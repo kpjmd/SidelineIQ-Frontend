@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listPosts } from '@/lib/mcp';
+import { requireMd } from '@/lib/desk-auth';
 import type { ContentType, PostStatus, Sport } from '@/lib/types';
-
-function checkAuth(request: NextRequest): boolean {
-  const auth = request.headers.get('Authorization');
-  return auth === `Bearer ${process.env.ADMIN_SECRET}`;
-}
 
 // Post browser for the admin Promote tab. Filterable list of posts (defaults to
 // CONFLICT_FLAG client-side) so the MD can promote auto-published posts that
 // never entered the review queue.
 export async function GET(request: NextRequest) {
-  if (!checkAuth(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const gate = await requireMd();
+  if (!gate.ok) return gate.response;
 
   const sp = request.nextUrl.searchParams;
   const limit = Number(sp.get('limit')) || 20;
