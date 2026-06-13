@@ -5,7 +5,6 @@ import type { MdReview } from '@/lib/types';
 
 interface Props {
   review: MdReview;
-  adminSecret: string;
   onUpdate: (updated: MdReview) => void;
 }
 
@@ -13,7 +12,7 @@ function countSentences(text: string): number {
   return text.split(/[.!?]+/).filter((s) => s.trim().length > 0).length;
 }
 
-export function MDReviewForm({ review, adminSecret, onUpdate }: Props) {
+export function MDReviewForm({ review, onUpdate }: Props) {
   const [notes, setNotes] = useState(review.reviewer_notes ?? '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +28,6 @@ export function MDReviewForm({ review, adminSecret, onUpdate }: Props) {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${adminSecret}`,
         },
         body: JSON.stringify({ status, reviewer_notes: notes }),
       });

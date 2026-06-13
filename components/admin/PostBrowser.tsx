@@ -10,14 +10,10 @@ const CONTENT_TYPES: ContentType[] = ['CONFLICT_FLAG', 'BREAKING', 'TRACKING', '
 const SPORTS: Sport[] = ['NFL', 'NBA', 'PREMIER_LEAGUE', 'UFC'];
 const PAGE_SIZE = 20;
 
-interface Props {
-  adminSecret: string;
-}
-
 // Post browser for the Promote tab. Conflict-flag posts (the prime promotion
 // targets) auto-publish and never hit the review queue, so this lets the MD find
 // any published post and propose it to the Injury Desk. Promote is additive.
-export function PostBrowser({ adminSecret }: Props) {
+export function PostBrowser() {
   const [posts, setPosts] = useState<InjuryPost[]>([]);
   const [contentType, setContentType] = useState<ContentType | ''>('CONFLICT_FLAG');
   const [sport, setSport] = useState<Sport | ''>('');
@@ -42,9 +38,7 @@ export function PostBrowser({ adminSecret }: Props) {
         params.set('limit', String(PAGE_SIZE));
         params.set('offset', String(nextOffset));
 
-        const res = await fetch(`/api/admin/posts?${params.toString()}`, {
-          headers: { Authorization: `Bearer ${adminSecret}` },
-        });
+        const res = await fetch(`/api/admin/posts?${params.toString()}`);
         if (!res.ok) throw new Error('Failed to fetch posts');
         const data = (await res.json()) as FeedResponse;
         setPosts((prev) => (append ? [...prev, ...data.posts] : data.posts));
@@ -56,7 +50,7 @@ export function PostBrowser({ adminSecret }: Props) {
         setLoading(false);
       }
     },
-    [adminSecret, contentType, sport, athlete],
+    [contentType, sport, athlete],
   );
 
   // Re-fetch from the top whenever a filter changes.
@@ -74,7 +68,6 @@ export function PostBrowser({ adminSecret }: Props) {
     try {
       const res = await fetch(`/api/admin/promote/${post.id}`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${adminSecret}` },
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) throw new Error(data.error ?? 'Failed to promote');

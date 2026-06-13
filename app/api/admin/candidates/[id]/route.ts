@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { decideCandidate } from '@/lib/mcp';
+import { requireMd } from '@/lib/desk-auth';
 import type { CandidateDecision } from '@/lib/types';
-
-function checkAuth(request: NextRequest): boolean {
-  const auth = request.headers.get('Authorization');
-  return auth === `Bearer ${process.env.ADMIN_SECRET}`;
-}
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!checkAuth(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const gate = await requireMd();
+  if (!gate.ok) return gate.response;
 
   const { id } = await params;
   const body = (await request.json().catch(() => ({}))) as { decision?: string };

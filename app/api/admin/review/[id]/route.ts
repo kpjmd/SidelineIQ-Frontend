@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateMdReview } from '@/lib/mcp';
+import { requireMd } from '@/lib/desk-auth';
 import { revalidatePath } from 'next/cache';
-
-function checkAuth(request: NextRequest): boolean {
-  const auth = request.headers.get('Authorization');
-  return auth === `Bearer ${process.env.ADMIN_SECRET}`;
-}
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!checkAuth(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const gate = await requireMd();
+  if (!gate.ok) return gate.response;
 
   const { id } = await params;
   const body = await request.json() as { status: 'APPROVED' | 'REJECTED'; reviewer_notes?: string };
