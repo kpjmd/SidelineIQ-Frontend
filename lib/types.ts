@@ -121,7 +121,35 @@ export type UpdateKind =
   | 'CORRECTION'
   | 'RESOLUTION';
 
-// Shape returned by web_get_entity.
+// ── Injury threads (Managed Session layer, mcp migration 014) ────────────────
+export type DateConfidence = 'unknown' | 'possible' | 'probable' | 'confirmed';
+
+export interface DateResolutionSource {
+  url?: string;
+  title?: string;
+  stage: 'api' | 'web_search' | 'md_manual';
+}
+
+export interface OtmProjection {
+  min_weeks: number;
+  max_weeks: number;
+  probability_week_2?: number;
+  probability_week_4?: number;
+  probability_week_8?: number;
+  projected_return_date?: string | null;
+  created_at?: string;
+}
+
+export interface AccuracyRecord {
+  projected_return_date: string | null;
+  actual_return_date: string | null;
+  error_days: number | null;
+  within_range: boolean | null;
+  otm_min_weeks: number | null;
+  otm_max_weeks: number | null;
+}
+
+// Shape returned by web_get_entity / web_thread_get.
 export interface InjuryEntity {
   id: string;
   player_id: string;
@@ -133,6 +161,47 @@ export interface InjuryEntity {
   first_reported_at: string;
   last_updated_at: string;
   actual_return_date: string | null;
+  // migration 014 — present after the migration is applied.
+  injury_date?: string | null;
+  injury_date_confidence?: DateConfidence;
+  surgery_date?: string | null;
+  surgery_confirmed?: boolean;
+  date_resolution_sources?: DateResolutionSource[] | null;
+  otm_projection?: OtmProjection | null;
+  accuracy_record?: AccuracyRecord | null;
+  returned_at?: string | null;
+  closed_at?: string | null;
+  needs_date_review?: boolean;
+}
+
+// Shape returned by web_list_threads (entity joined with athlete/team display).
+export interface ThreadListItem {
+  id: string;
+  player_id: string;
+  athlete_name: string | null;
+  sport: Sport | null;
+  team_name: string | null;
+  body_part: string | null;
+  laterality: Laterality;
+  injury_type: string | null;
+  status: EntityStatus;
+  injury_date: string | null;
+  injury_date_confidence: DateConfidence;
+  surgery_date: string | null;
+  surgery_confirmed: boolean;
+  needs_date_review: boolean;
+  otm_projection: OtmProjection | null;
+  accuracy_record: AccuracyRecord | null;
+  actual_return_date: string | null;
+  returned_at: string | null;
+  closed_at: string | null;
+  first_reported_at: string;
+  last_updated_at: string;
+}
+
+export interface ThreadDetail {
+  entity: InjuryEntity;
+  updates: InjuryUpdate[];
 }
 
 // Shape returned (newest-first) by web_list_injury_updates.

@@ -4,16 +4,19 @@ import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import type { CandidateListItem, MdReview } from '@/lib/types';
+import type { CandidateListItem, MdReview, ThreadListItem } from '@/lib/types';
 import { ReviewQueue } from '@/components/admin/ReviewQueue';
 import { PostBrowser } from '@/components/admin/PostBrowser';
 import { CandidatesQueue } from '@/components/admin/CandidatesQueue';
+import { ThreadsQueue } from '@/components/admin/ThreadsQueue';
 
-type Tab = 'reviews' | 'promote' | 'candidates';
+type Tab = 'reviews' | 'promote' | 'candidates' | 'threads';
 
 interface Props {
   initialReviews: MdReview[];
   initialCandidates: CandidateListItem[];
+  initialThreads: ThreadListItem[];
+  initialDateReviewCount: number;
 }
 
 // Interactive shell for the /admin MD dashboard. Auth is handled upstream by the
@@ -21,7 +24,12 @@ interface Props {
 // non-MDs); this component just renders and re-fetches data. All /api/admin/*
 // calls rely on the session cookie — no Bearer token. A 401 means the session
 // expired, so we bounce back to /signin.
-export function AdminDashboard({ initialReviews, initialCandidates }: Props) {
+export function AdminDashboard({
+  initialReviews,
+  initialCandidates,
+  initialThreads,
+  initialDateReviewCount,
+}: Props) {
   const router = useRouter();
   const [reviews, setReviews] = useState<MdReview[]>(initialReviews);
   const [candidates, setCandidates] = useState<CandidateListItem[]>(initialCandidates);
@@ -92,6 +100,7 @@ export function AdminDashboard({ initialReviews, initialCandidates }: Props) {
             ['reviews', `Reviews · ${reviews.filter((r) => r.status === 'PENDING').length}`],
             ['promote', 'Promote'],
             ['candidates', `Candidates · ${candidates.length}`],
+            ['threads', `Threads${initialDateReviewCount > 0 ? ` · ${initialDateReviewCount}!` : ''}`],
           ] as [Tab, string][]).map(([key, label]) => (
             <button
               key={key}
@@ -132,6 +141,7 @@ export function AdminDashboard({ initialReviews, initialCandidates }: Props) {
             initialCandidates={candidates}
           />
         )}
+        {tab === 'threads' && <ThreadsQueue initialActive={initialThreads} />}
       </main>
     </div>
   );
