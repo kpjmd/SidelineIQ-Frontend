@@ -4,12 +4,15 @@ import type {
   CandidateDecision,
   CandidateListItem,
   CandidateStatus,
+  DateConfidence,
+  DateResolutionSource,
   DeskAttestation,
   DeskPost,
   DeskPostDetail,
   DeskPostListItem,
   DeskPostStatus,
   DeskUser,
+  EntityStatus,
   FeedResponse,
   InjuryEntity,
   InjuryPost,
@@ -19,6 +22,8 @@ import type {
   MdReview,
   MdReviewStatus,
   PublishResult,
+  ThreadDetail,
+  ThreadListItem,
 } from './types';
 
 const WEB_MCP_URL = process.env.WEB_MCP_URL!;
@@ -281,4 +286,50 @@ export async function listInjuryUpdates(entityId: string): Promise<InjuryUpdate[
   } catch {
     return [];
   }
+}
+
+// ── Injury threads (Managed Session layer, mcp migration 014) ────────────────
+// Read tools power the MD dashboard "Threads" tab; write tools (update_dates,
+// close) are invoked only from server-side /api/admin/threads/* handlers.
+
+export async function listThreads(filters: {
+  status?: EntityStatus;
+  needs_date_review?: boolean;
+  limit?: number;
+} = {}): Promise<ThreadListItem[]> {
+  const args: Record<string, unknown> = {};
+  if (filters.status) args.status = filters.status;
+  if (filters.needs_date_review !== undefined) args.needs_date_review = filters.needs_date_review;
+  if (filters.limit !== undefined) args.limit = filters.limit;
+  const result = await callMCPTool<{ threads: ThreadListItem[] }>('web_list_threads', args);
+  return result.threads;
+}
+
+export async function getThread(entityId: string): Promise<ThreadDetail> {
+  return callMCPTool<ThreadDetail>('web_thread_get', { entity_id: entityId });
+}
+
+export interface UpdateThreadDatesInput {
+  entity_id: string;
+  injury_date?: string;
+  injury_date_confidence?: DateConfidence;
+  surgery_date?: string;
+  surgery_confirmed?: boolean;
+  date_resolution_sources?: DateResolutionSource[];
+  needs_date_review?: boolean;
+}
+
+export async function updateThreadDates(
+  input: UpdateThreadDatesInput,
+): Promise<{ entity: InjuryEntity }> {
+  return callMCPTool<{ entity: InjuryEntity }>('web_thread_update_dates', { ...input });
+}
+
+export async function closeThread(input: {
+  entity_id: string;
+  actual_return_date?: string;
+  outcome?: 'RESOLVED' | 'RETIRED';
+  closed_by?: string;
+}): Promise<{ entity: InjuryEntity }> {
+  return callMCPTool<{ entity: InjuryEntity }>('web_thread_close', { ...input });
 }
