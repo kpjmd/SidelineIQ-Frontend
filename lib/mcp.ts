@@ -27,9 +27,14 @@ import type {
 } from './types';
 
 const WEB_MCP_URL = process.env.WEB_MCP_URL!;
+const MCP_AUTH_SECRET = process.env.MCP_AUTH_SECRET;
 
 async function callMCPTool<T>(toolName: string, args: Record<string, unknown>): Promise<T> {
-  const transport = new StreamableHTTPClientTransport(new URL(WEB_MCP_URL));
+  const transport = new StreamableHTTPClientTransport(new URL(WEB_MCP_URL), {
+    requestInit: MCP_AUTH_SECRET
+      ? { headers: { Authorization: `Bearer ${MCP_AUTH_SECRET}` } }
+      : undefined,
+  });
   const client = new Client({ name: 'sidelineiq-frontend', version: '1.0.0' });
   try {
     await client.connect(transport);
