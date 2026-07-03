@@ -32,6 +32,11 @@ function injuryDescriptor(t: ThreadListItem): string {
     .join(' ');
 }
 
+// DATE columns arrive from the MCP layer as full ISO timestamps
+// ('2026-01-19T00:00:00.000Z'); render (and seed <input type="date">) as YYYY-MM-DD.
+const asDateInput = (d: string | null | undefined): string => (d ? d.slice(0, 10) : '');
+const fmtDate = (d: string | null | undefined): string => (d ? d.slice(0, 10) : '—');
+
 // MD dashboard "Threads" tab. Three sub-views over injury_entities:
 //   active       — open threads: trajectory, projection, edit-dates + close
 //   date_review  — threads with unresolved dates awaiting MD manual input
@@ -160,7 +165,7 @@ function ThreadCard({
   const [busy, setBusy] = useState(false);
 
   // date-entry form
-  const [injuryDate, setInjuryDate] = useState(thread.injury_date ?? '');
+  const [injuryDate, setInjuryDate] = useState(asDateInput(thread.injury_date));
   const [confidence, setConfidence] = useState<DateConfidence>(thread.injury_date_confidence);
   // close form
   const [returnDate, setReturnDate] = useState('');
@@ -220,7 +225,7 @@ function ThreadCard({
           className={`px-2 py-0.5 rounded text-xs font-semibold border ${CONFIDENCE_COLOR[thread.injury_date_confidence]}`}
           title="injury-date confidence"
         >
-          {thread.injury_date ?? 'no date'} · {thread.injury_date_confidence}
+          {thread.injury_date ? fmtDate(thread.injury_date) : 'no date'} · {thread.injury_date_confidence}
         </span>
         <time className="text-xs text-slate-600 shrink-0">
           {formatDistanceToNow(new Date(thread.last_updated_at), { addSuffix: true })}
@@ -236,13 +241,17 @@ function ThreadCard({
             <div>
               <p className="text-slate-500 uppercase tracking-wide">Injury date</p>
               <p className="text-slate-300">
-                {thread.injury_date ?? '—'} ({thread.injury_date_confidence})
+                {fmtDate(thread.injury_date)} ({thread.injury_date_confidence})
               </p>
             </div>
             <div>
               <p className="text-slate-500 uppercase tracking-wide">Surgery</p>
               <p className="text-slate-300">
-                {thread.surgery_date ?? (thread.surgery_confirmed ? 'confirmed, date unknown' : '—')}
+                {thread.surgery_date
+                  ? fmtDate(thread.surgery_date)
+                  : thread.surgery_confirmed
+                    ? 'confirmed, date unknown'
+                    : '—'}
               </p>
             </div>
             {proj && (
@@ -250,7 +259,7 @@ function ThreadCard({
                 <p className="text-slate-500 uppercase tracking-wide">OTM projection</p>
                 <p className="text-slate-300">
                   {proj.min_weeks}–{proj.max_weeks}w
-                  {proj.projected_return_date ? ` · projected return ${proj.projected_return_date}` : ''}
+                  {proj.projected_return_date ? ` · projected return ${fmtDate(proj.projected_return_date)}` : ''}
                 </p>
               </div>
             )}
@@ -396,7 +405,7 @@ function AccuracyView({ threads, loading }: { threads: ThreadListItem[]; loading
             </div>
             <div className="text-right text-xs">
               <p className="text-slate-400">
-                proj {rec?.projected_return_date ?? '—'} · actual {rec?.actual_return_date ?? '—'}
+                proj {fmtDate(rec?.projected_return_date)} · actual {fmtDate(rec?.actual_return_date)}
               </p>
               <p
                 className={
