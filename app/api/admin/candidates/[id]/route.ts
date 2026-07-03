@@ -22,8 +22,7 @@ export async function POST(
   }
 
   try {
-    // decided_by is 'md' until NextAuth lands in Phase 2.
-    const result = await decideCandidate(id, decision as CandidateDecision, 'md');
+    const result = await decideCandidate(id, decision as CandidateDecision, gate.userId);
     return NextResponse.json(result);
   } catch (err) {
     console.error('decide candidate error:', err);
