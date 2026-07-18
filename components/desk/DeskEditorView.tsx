@@ -2,21 +2,30 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import type { DeskAttestation, DeskContext, DeskPost } from '@/lib/types';
+import type { DeskAttestation, DeskContext, DeskPost, DeskPostUpdate } from '@/lib/types';
 import { DraftEditor } from './DraftEditor';
 import { LinterRail } from './LinterRail';
 import { AttestationModal } from './AttestationModal';
 import { FactValidationPanel } from './FactValidationPanel';
 import { EntityTimelinePanel } from './EntityTimelinePanel';
 import { StaleAttestationBanner } from './StaleAttestationBanner';
+import { ReturnWatchPanel } from './ReturnWatchPanel';
 
 interface Props {
   initialPost: DeskPost;
   initialAttestations: DeskAttestation[];
   context: DeskContext | null;
+  initialUpdates: DeskPostUpdate[];
+  returnWatchCandidateId?: string;
 }
 
-export function DeskEditorView({ initialPost, initialAttestations, context }: Props) {
+export function DeskEditorView({
+  initialPost,
+  initialAttestations,
+  context,
+  initialUpdates,
+  returnWatchCandidateId,
+}: Props) {
   const [post, setPost] = useState(initialPost);
   const [attestations, setAttestations] = useState(initialAttestations);
   const [markdown, setMarkdown] = useState(initialPost.markdown_body);
@@ -72,6 +81,13 @@ export function DeskEditorView({ initialPost, initialAttestations, context }: Pr
           />
           <FactValidationPanel context={context} />
           <EntityTimelinePanel updates={context?.updates ?? []} />
+          {post.status === 'PUBLISHED' && (
+            <ReturnWatchPanel
+              deskPostId={post.id}
+              initialUpdates={initialUpdates}
+              candidateId={returnWatchCandidateId}
+            />
+          )}
         </div>
       </div>
     </div>

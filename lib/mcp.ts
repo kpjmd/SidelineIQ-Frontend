@@ -11,6 +11,7 @@ import type {
   DeskPostDetail,
   DeskPostListItem,
   DeskPostStatus,
+  DeskPostUpdate,
   DeskUser,
   EntityStatus,
   FeedResponse,
@@ -257,6 +258,29 @@ export async function deskRetract(
     desk_post_id: deskPostId,
     reviewer_user_id: reviewerUserId,
   });
+}
+
+// ── Return Watch (mcp migration 015) ──────────────────────────────────────
+
+export async function deskListUpdates(deskPostId: string): Promise<DeskPostUpdate[]> {
+  const result = await callMCPTool<{ updates: DeskPostUpdate[] }>('desk_list_updates', {
+    desk_post_id: deskPostId,
+  });
+  return result.updates;
+}
+
+export interface AppendUpdateInput {
+  desk_post_id: string;
+  author_id: string;
+  headline: string;
+  markdown_body: string;
+  occurred_at: string;
+  candidate_id?: string;
+}
+
+export async function deskAppendUpdate(input: AppendUpdateInput): Promise<DeskPostUpdate> {
+  const result = await callMCPTool<{ update: DeskPostUpdate }>('desk_append_update', { ...input });
+  return result.update;
 }
 
 // ── Read tools backing the Injury Desk context panels (mcp PR A) ─────────────
