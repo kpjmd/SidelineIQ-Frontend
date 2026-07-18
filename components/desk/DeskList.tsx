@@ -33,7 +33,12 @@ function injuryDesc(c: { laterality: string | null; body_part: string | null; in
 export function DeskList({ initialPosts, acceptedCandidates }: Props) {
   const router = useRouter();
   const [posts] = useState(initialPosts);
-  const [candidates, setCandidates] = useState(acceptedCandidates);
+  const [candidates, setCandidates] = useState(
+    acceptedCandidates.filter((c) => c.candidate_kind !== 'RETURN_WATCH_UPDATE'),
+  );
+  const [returnWatchCandidates] = useState(
+    acceptedCandidates.filter((c) => c.candidate_kind === 'RETURN_WATCH_UPDATE'),
+  );
   const [starting, setStarting] = useState<string | null>(null);
   const [error, setError] = useState<Record<string, string>>({});
 
@@ -90,6 +95,31 @@ export function DeskList({ initialPosts, acceptedCandidates }: Props) {
               </div>
               {error[c.id] && <p className="text-xs text-red-400 mt-2">{error[c.id]}</p>}
             </div>
+          ))
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Return Watch pending</h2>
+        {returnWatchCandidates.length === 0 ? (
+          <p className="text-xs text-slate-600">No pending Return Watch follow-ups.</p>
+        ) : (
+          returnWatchCandidates.map((c) => (
+            <Link
+              key={c.id}
+              href={`/desk/${c.target_desk_post_id}?candidate_id=${c.id}`}
+              className="block bg-slate-900 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white truncate">{c.athlete_name ?? 'Unknown athlete'}</p>
+                  <p className="text-xs text-slate-500 truncate mt-0.5">{injuryDesc(c) || c.headline || '—'}</p>
+                </div>
+                <span className="px-2 py-0.5 rounded text-xs font-semibold border shrink-0 bg-emerald-900/60 text-emerald-300 border-emerald-700">
+                  Return Watch
+                </span>
+              </div>
+            </Link>
           ))
         )}
       </section>

@@ -87,6 +87,10 @@ export interface ListPostsFilters {
 export type Laterality = 'LEFT' | 'RIGHT' | 'BILATERAL' | 'UNSPECIFIED';
 export type CandidateStatus = 'PROPOSED' | 'ACCEPTED' | 'DISMISSED' | 'PROMOTED';
 export type CandidateDecision = 'ACCEPTED' | 'DISMISSED';
+// NEW_POST: accepting drafts a brand-new desk post (the original Phase 1
+// flow). RETURN_WATCH_UPDATE: accepting routes to target_desk_post_id's
+// editor to append a dated follow-up instead (see migration 015).
+export type CandidateKind = 'NEW_POST' | 'RETURN_WATCH_UPDATE';
 
 // Row returned by web_list_candidates — the desk_candidates row joined to
 // athlete / entity / source-post display fields.
@@ -97,6 +101,8 @@ export interface CandidateListItem {
   promotion_score: number;
   reasons: string[] | null;
   status: CandidateStatus;
+  candidate_kind: CandidateKind;
+  target_desk_post_id: string | null;
   proposed_at: string;
   decided_at: string | null;
   decided_by: string | null;
@@ -269,6 +275,21 @@ export interface DeskAttestation {
 export interface DeskPostDetail {
   post: DeskPost;
   attestations: DeskAttestation[];
+}
+
+// A dated "Return Watch" follow-up appended to a PUBLISHED desk post (mcp
+// migration 015). Backs the updates[] array of the kpjmd handoff and the
+// timeline rendered in the /desk editor. desk_list_updates returns these
+// newest-first.
+export interface DeskPostUpdate {
+  id: string;
+  desk_post_id: string;
+  headline: string;
+  markdown_body: string;
+  occurred_at: string;
+  author_id: string | null;
+  content_hash: string;
+  created_at: string;
 }
 
 export type LintSeverity = 'warning' | 'blocker';

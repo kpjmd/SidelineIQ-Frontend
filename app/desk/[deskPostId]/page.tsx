@@ -1,19 +1,22 @@
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { deskGet, getEntity, getPostById, listInjuryUpdates } from '@/lib/mcp';
+import { deskGet, deskListUpdates, getEntity, getPostById, listInjuryUpdates } from '@/lib/mcp';
 import { DeskEditorView } from '@/components/desk/DeskEditorView';
-import type { DeskContext } from '@/lib/types';
+import type { DeskContext, DeskPostUpdate } from '@/lib/types';
 
 export default async function DeskPostPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ deskPostId: string }>;
+  searchParams: Promise<{ candidate_id?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect('/signin');
   if (session.user.role !== 'md') redirect('/signin');
 
   const { deskPostId } = await params;
+  const { candidate_id: candidateId } = await searchParams;
 
   let detail;
   try {
@@ -37,11 +40,23 @@ export default async function DeskPostPage({
     console.error('desk context load error:', err);
   }
 
+  // Return Watch timeline — only meaningful once the post is live.
+  let returnWatchUpdates: DeskPostUpdate[] = [];
+  if (detail.post.status === 'PUBLISHED') {
+    try {
+      returnWatchUpdates = await deskListUpdates(deskPostId);
+    } catch (err) {
+      console.error('desk list updates error:', err);
+    }
+  }
+
   return (
     <DeskEditorView
       initialPost={detail.post}
       initialAttestations={detail.attestations}
       context={context}
+      initialUpdates={returnWatchUpdates}
+      returnWatchCandidateId={candidateId}
     />
   );
 }

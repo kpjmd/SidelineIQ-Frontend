@@ -76,7 +76,14 @@ export function CandidatesQueue({ initialCandidates }: Props) {
             >
               {c.sport && <SportBadge sport={c.sport} />}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white truncate">{c.athlete_name ?? 'Unknown athlete'}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-white truncate">{c.athlete_name ?? 'Unknown athlete'}</p>
+                  {c.candidate_kind === 'RETURN_WATCH_UPDATE' && (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold border shrink-0 bg-emerald-900/60 text-emerald-300 border-emerald-700">
+                      Return Watch
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-slate-500 truncate mt-0.5">{injuryDesc || c.headline || '—'}</p>
               </div>
               <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -122,7 +129,9 @@ export function CandidatesQueue({ initialCandidates }: Props) {
                     </>
                   )}
                   <p className="text-xs text-slate-600 pt-1">
-                    Accept parks this for Injury Desk authoring (Phase 2). Dismiss closes it.
+                    {c.candidate_kind === 'RETURN_WATCH_UPDATE'
+                      ? 'Accept parks this in /desk to append a dated follow-up to the existing post. Dismiss closes it.'
+                      : 'Accept parks this for Injury Desk authoring (Phase 2). Dismiss closes it.'}
                   </p>
                   {c.slug && (
                     <Link
