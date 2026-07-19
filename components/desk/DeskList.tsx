@@ -4,7 +4,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
-import type { CandidateListItem, DeskPost, DeskPostListItem, DeskPostStatus } from '@/lib/types';
+import { SECTION_KEYS } from '@/lib/types';
+import type {
+  CandidateListItem,
+  DeskPost,
+  DeskPostListItem,
+  DeskPostStatus,
+  DeskSections,
+} from '@/lib/types';
 
 interface Props {
   initialPosts: DeskPostListItem[];
@@ -51,11 +58,20 @@ export function DeskList({ initialPosts, acceptedCandidates }: Props) {
     });
     try {
       const title = `${c.athlete_name ?? 'Athlete'} — ${injuryDesc(c) || 'injury update'}`;
-      const seed = `# ${title}\n\n_Draft commentary — replace with physician-authored analysis._\n`;
+      // Start every section empty rather than seeding placeholder prose: the
+      // linter blocks publish on an empty section, so an empty one is impossible
+      // to miss, while a seeded one could be published as-is by accident.
+      const sections = Object.fromEntries(SECTION_KEYS.map((k) => [k, ''])) as DeskSections;
       const res = await fetch('/api/desk/drafts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ candidate_id: c.id, title, markdown_body: seed }),
+        body: JSON.stringify({
+          candidate_id: c.id,
+          title,
+          sections,
+          // Prefill what the entity already knows; overridable in the metadata panel.
+          meta: c.athlete_name ? { player: c.athlete_name } : {},
+        }),
       });
       const data = (await res.json().catch(() => ({}))) as { post?: DeskPost; error?: string };
       if (!res.ok || !data.post) throw new Error(data.error ?? 'Failed to create draft');

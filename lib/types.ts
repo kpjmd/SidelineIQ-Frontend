@@ -229,13 +229,62 @@ export interface InjuryUpdate {
 
 export type DeskPostStatus = 'DRAFT' | 'READY' | 'PUBLISHED' | 'RETRACTED';
 
+// The seven prose sections kpjmd.com's builder requires. Order matches the
+// rendered page. PLAIN TEXT only — kpjmd HTML-escapes these and never parses
+// markdown, so '**bold**' would ship as literal asterisks; the linter blocks it.
+// Paragraph breaks are '\n\n'.
+export const SECTION_KEYS = [
+  'snapshot',
+  'what_happened',
+  'anatomy',
+  'treatment',
+  'timeline',
+  'bridge',
+  'dr_take',
+] as const;
+
+export type SectionKey = (typeof SECTION_KEYS)[number];
+export type DeskSections = Record<SectionKey, string>;
+
+export interface DeskConflictFlag {
+  team_timeline: string;
+  otm_range: string;
+  rationale: string;
+}
+
+export interface DeskFaq {
+  q: string;
+  a: string;
+}
+
+// kpjmd's optional fields, authored here so the downloaded JSON needs no
+// hand-editing. Covered by content_hash — editing these after attestation
+// invalidates the publish gate, same as editing prose.
+export interface DeskMeta {
+  short_title?: string;
+  player?: string;
+  meta_description?: string;
+  treatment_heading?: string;
+  conflict_flag?: DeskConflictFlag;
+  relevant_tool?: string;
+  faqs?: DeskFaq[];
+  related_slugs?: string[];
+  anatomy_diagram?: string;
+  anatomy_diagram_alt?: string;
+}
+
 export interface DeskPost {
   id: string;
   candidate_id: string | null;
   entity_id: string;
   slug: string;
   title: string;
+  // Derived server-side from `sections`; never sent from the client.
   markdown_body: string;
+  // NULL on rows predating mcp migration 016 — such a post lints with a blocker
+  // and must be re-sectioned before it can publish.
+  sections: DeskSections | null;
+  meta: DeskMeta | null;
   draft_json: unknown;
   status: DeskPostStatus;
   version: number;
@@ -247,7 +296,28 @@ export interface DeskPost {
   disclaimer_present: boolean;
   created_at: string;
   updated_at: string;
+  // Published on SidelineIQ (set by the publish gate) vs. live on kpjmd.com — a
+  // second, downstream surface confirmed by fetching the live URL.
   published_at: string | null;
+  kpjmd_published_at: string | null;
+  kpjmd_url: string | null;
+  kpjmd_content_hash: string | null;
+}
+
+// The outcome of a confirm-live check. ok:false is a normal state the editor
+// renders ("not live yet"), not an error.
+export interface KpjmdLiveCheck {
+  ok: boolean;
+  url: string;
+  http_status: number | null;
+  live_content_hash: string | null;
+  expected_content_hash: string;
+  reasons: string[];
+}
+
+export interface KpjmdLiveResult {
+  check: KpjmdLiveCheck;
+  post: DeskPost;
 }
 
 // desk_list rows — DeskPost joined to athlete/injury display fields.

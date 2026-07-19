@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMd } from '@/lib/desk-auth';
 import { deskGet, deskUpdateDraft } from '@/lib/mcp';
+import type { DeskMeta, DeskSections } from '@/lib/types';
 
 export async function GET(
   _request: NextRequest,
@@ -22,7 +23,8 @@ export async function GET(
 }
 
 interface UpdateBody {
-  markdown_body?: string;
+  sections?: Partial<DeskSections>;
+  meta?: DeskMeta;
   title?: string;
   draft_json?: unknown;
   source_attribution?: unknown;
@@ -33,6 +35,10 @@ interface UpdateBody {
 // Debounced auto-save from the DraftEditor. edited_by is the session user.
 // Editing a READY post reverts it to DRAFT server-side — the returned post
 // reflects the authoritative status.
+//
+// markdown_body is deliberately NOT accepted: it is derived from sections by the
+// MCP server, so a client cannot make the stored body disagree with the sections
+// the MD authored and attested to.
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -42,15 +48,19 @@ export async function PATCH(
 
   const { id } = await params;
   const body = (await request.json().catch(() => ({}))) as UpdateBody;
-  if (!body.markdown_body) {
-    return NextResponse.json({ error: 'markdown_body is required' }, { status: 400 });
+  if (!body.sections && !body.meta && body.title === undefined) {
+    return NextResponse.json(
+      { error: 'at least one of sections, meta, or title is required' },
+      { status: 400 },
+    );
   }
 
   try {
     const post = await deskUpdateDraft({
       desk_post_id: id,
       edited_by: gate.userId,
-      markdown_body: body.markdown_body,
+      sections: body.sections,
+      meta: body.meta,
       title: body.title,
       draft_json: body.draft_json,
       source_attribution: body.source_attribution,

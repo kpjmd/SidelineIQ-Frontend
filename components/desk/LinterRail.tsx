@@ -5,9 +5,9 @@ import type { LintFinding, LintResult } from '@/lib/types';
 
 interface Props {
   deskPostId: string;
-  // Re-lint (debounced) whenever the editor body settles. The save and the lint
-  // are independent debounces against the same body; lint reads the persisted
-  // body, so it trails a save by design.
+  // Re-lint trigger only — the lint itself reads the PERSISTED post server-side.
+  // Pass the SAVED post's markdown_body (not the editor's in-progress state) so
+  // this fires when a save lands instead of racing it on every keystroke.
   markdown: string;
   onBlockersChange: (hasBlockers: boolean) => void;
 }
@@ -35,8 +35,8 @@ function Finding({ finding }: { finding: LintFinding }) {
 
 // Live content linter. Blockers gate publish (server-enforced); warnings are
 // advisory. `classifier_unavailable` is a fail-open warning (the Haiku classifier
-// couldn't run) — never treated as a blocker. Tolerates an empty result (the 2C
-// stub returns no findings until the 2D linter is deployed).
+// couldn't run) — never treated as a blocker. Blockers include the kpjmd contract
+// rules (incomplete_sections, markdown_in_section) alongside the framing rules.
 export function LinterRail({ deskPostId, markdown, onBlockersChange }: Props) {
   const [result, setResult] = useState<LintResult | null>(null);
   const [linting, setLinting] = useState(false);

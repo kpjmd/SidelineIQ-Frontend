@@ -2,7 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import type { DeskAttestation, DeskContext, DeskPost, DeskPostUpdate } from '@/lib/types';
+import { SECTION_KEYS } from '@/lib/types';
+import type {
+  DeskAttestation,
+  DeskContext,
+  DeskMeta,
+  DeskPost,
+  DeskPostUpdate,
+  DeskSections,
+} from '@/lib/types';
 import { DraftEditor } from './DraftEditor';
 import { LinterRail } from './LinterRail';
 import { AttestationModal } from './AttestationModal';
@@ -10,6 +18,16 @@ import { FactValidationPanel } from './FactValidationPanel';
 import { EntityTimelinePanel } from './EntityTimelinePanel';
 import { StaleAttestationBanner } from './StaleAttestationBanner';
 import { ReturnWatchPanel } from './ReturnWatchPanel';
+import { HandoffPanel } from './HandoffPanel';
+
+// A post predating mcp migration 016 has sections: null. Normalizing to seven
+// empty strings lets the editor open it and re-section it in place; the linter
+// blocks publish until every section carries prose.
+function normalizeSections(raw: DeskSections | null): DeskSections {
+  const out = {} as DeskSections;
+  for (const key of SECTION_KEYS) out[key] = raw?.[key] ?? '';
+  return out;
+}
 
 interface Props {
   initialPost: DeskPost;
@@ -28,7 +46,8 @@ export function DeskEditorView({
 }: Props) {
   const [post, setPost] = useState(initialPost);
   const [attestations, setAttestations] = useState(initialAttestations);
-  const [markdown, setMarkdown] = useState(initialPost.markdown_body);
+  const [sections, setSections] = useState(() => normalizeSections(initialPost.sections));
+  const [meta, setMeta] = useState<DeskMeta>(initialPost.meta ?? {});
   const [title, setTitle] = useState(initialPost.title);
   const [blockersPresent, setBlockersPresent] = useState(false);
 
@@ -60,17 +79,23 @@ export function DeskEditorView({
         <div className="lg:col-span-2 space-y-4">
           <DraftEditor
             deskPostId={post.id}
-            markdown={markdown}
+            sections={sections}
+            meta={meta}
             title={title}
             status={post.status}
-            onMarkdownChange={setMarkdown}
+            onSectionsChange={setSections}
+            onMetaChange={setMeta}
             onTitleChange={setTitle}
             onSaved={setPost}
           />
         </div>
 
         <div className="space-y-4">
-          <LinterRail deskPostId={post.id} markdown={markdown} onBlockersChange={setBlockersPresent} />
+          <LinterRail
+            deskPostId={post.id}
+            markdown={post.markdown_body}
+            onBlockersChange={setBlockersPresent}
+          />
           <AttestationModal
             deskPostId={post.id}
             status={post.status}
@@ -81,6 +106,9 @@ export function DeskEditorView({
           />
           <FactValidationPanel context={context} />
           <EntityTimelinePanel updates={context?.updates ?? []} />
+          {(post.status === 'PUBLISHED' || post.status === 'RETRACTED') && (
+            <HandoffPanel post={post} onConfirmed={setPost} />
+          )}
           {post.status === 'PUBLISHED' && (
             <ReturnWatchPanel
               deskPostId={post.id}
