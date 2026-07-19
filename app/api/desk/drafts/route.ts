@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMd } from '@/lib/desk-auth';
 import { deskCreateDraft } from '@/lib/mcp';
+import type { DeskMeta, DeskSections } from '@/lib/types';
 
 interface CreateDraftBody {
   candidate_id?: string;
   title?: string;
-  markdown_body?: string;
+  // The seven kpjmd sections. markdown_body is not accepted — the MCP server
+  // derives it from these, so the stored body can never disagree with them.
+  sections?: DeskSections;
+  meta?: DeskMeta;
   draft_json?: unknown;
   source_attribution?: unknown;
   disclaimer_present?: boolean;
@@ -18,9 +22,9 @@ export async function POST(request: NextRequest) {
   if (!gate.ok) return gate.response;
 
   const body = (await request.json().catch(() => ({}))) as CreateDraftBody;
-  if (!body.candidate_id || !body.title || !body.markdown_body) {
+  if (!body.candidate_id || !body.title || !body.sections) {
     return NextResponse.json(
-      { error: 'candidate_id, title, and markdown_body are required' },
+      { error: 'candidate_id, title, and sections are required' },
       { status: 400 },
     );
   }
@@ -30,7 +34,8 @@ export async function POST(request: NextRequest) {
       candidate_id: body.candidate_id,
       author_id: gate.userId,
       title: body.title,
-      markdown_body: body.markdown_body,
+      sections: body.sections,
+      meta: body.meta,
       draft_json: body.draft_json,
       source_attribution: body.source_attribution,
       disclaimer_present: body.disclaimer_present,

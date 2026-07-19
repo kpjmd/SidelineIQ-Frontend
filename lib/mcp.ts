@@ -7,13 +7,16 @@ import type {
   DateConfidence,
   DateResolutionSource,
   DeskAttestation,
+  DeskMeta,
   DeskPost,
   DeskPostDetail,
   DeskPostListItem,
   DeskPostStatus,
   DeskPostUpdate,
+  DeskSections,
   DeskUser,
   EntityStatus,
+  KpjmdLiveResult,
   FeedResponse,
   InjuryEntity,
   InjuryPost,
@@ -193,7 +196,8 @@ export interface CreateDraftInput {
   candidate_id: string;
   author_id: string;
   title: string;
-  markdown_body: string;
+  sections: DeskSections;
+  meta?: DeskMeta;
   draft_json?: unknown;
   source_attribution?: unknown;
   disclaimer_present?: boolean;
@@ -207,7 +211,11 @@ export async function deskCreateDraft(input: CreateDraftInput): Promise<DeskPost
 export interface UpdateDraftInput {
   desk_post_id: string;
   edited_by: string;
-  markdown_body: string;
+  // Partial: the editor autosaves the section being typed in, so an omitted key
+  // keeps its stored value. markdown_body is NOT an input — the server derives
+  // it from sections so the body can never disagree with what was attested.
+  sections?: Partial<DeskSections>;
+  meta?: DeskMeta;
   title?: string;
   draft_json?: unknown;
   source_attribution?: unknown;
@@ -255,6 +263,22 @@ export async function deskRetract(
   reviewerUserId: string,
 ): Promise<{ post: DeskPost }> {
   return callMCPTool<{ post: DeskPost }>('desk_retract', {
+    desk_post_id: deskPostId,
+    reviewer_user_id: reviewerUserId,
+  });
+}
+
+// Verify the post is actually live on kpjmd.com and record it. The fetch and
+// the DB write both happen MCP-side on purpose: a route that fetched here and
+// then called a "record it" tool could be bypassed with a fabricated result,
+// making the confirmation worth no more than the checkbox it replaces.
+//
+// Like deskPublish, a failed check is a SUCCESSFUL call ({check:{ok:false}}).
+export async function deskConfirmKpjmdLive(
+  deskPostId: string,
+  reviewerUserId: string,
+): Promise<KpjmdLiveResult> {
+  return callMCPTool<KpjmdLiveResult>('desk_confirm_kpjmd_live', {
     desk_post_id: deskPostId,
     reviewer_user_id: reviewerUserId,
   });
