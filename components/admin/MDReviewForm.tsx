@@ -35,8 +35,18 @@ export function MDReviewForm({ review, onUpdate }: Props) {
         const data = await res.json() as { error?: string };
         throw new Error(data.error ?? 'Request failed');
       }
-      const updated = await res.json() as MdReview;
+      const updated = await res.json() as MdReview & {
+        social?: { ok: boolean; error?: string };
+      };
       onUpdate(updated);
+      // The review saved and the post went live either way — but if the cast
+      // and tweet never happened, the MD needs to see that rather than a clean
+      // success. This button did not even attempt a social publish before.
+      if (updated.social && !updated.social.ok) {
+        setError(
+          `Approved and live on the site, but it did not reach Farcaster or X: ${updated.social.error ?? 'reached no social platform'}`,
+        );
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {

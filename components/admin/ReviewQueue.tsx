@@ -25,6 +25,10 @@ export function ReviewQueue({ initialReviews }: Props) {
   // to swap the button for a "Promoted ✓" badge, and surface per-row errors.
   const [promotedIds, setPromotedIds] = useState<Set<string>>(new Set());
   const [promoteError, setPromoteError] = useState<Record<string, string>>({});
+  // An approved post that never reached Farcaster or X used to look identical
+  // to a successful one. Keyed by review id so it survives the row leaving the
+  // pending list.
+  const [socialError, setSocialError] = useState<Record<string, string>>({});
 
   function handleUpdate(updated: MdReview) {
     setReviews((prev) =>
@@ -65,9 +69,26 @@ export function ReviewQueue({ initialReviews }: Props) {
         method: 'POST',
       });
       if (!res.ok) throw new Error('Failed to approve');
+
+      // Approval and social publish succeed independently — the post can be
+      // live on the site while the cast and tweet never happened.
+      const data = (await res.json().catch(() => null)) as
+        | { social?: { ok: boolean; error?: string } }
+        | null;
+      if (data?.social && !data.social.ok) {
+        setSocialError((prev) => ({
+          ...prev,
+          [review.id]: data.social?.error ?? 'reached no social platform',
+        }));
+      }
+
       setReviews((prev) => prev.filter((r) => r.id !== review.id));
     } catch (err) {
       console.error('Quick approve failed:', err);
+      setSocialError((prev) => ({
+        ...prev,
+        [review.id]: err instanceof Error ? err.message : 'Failed to approve',
+      }));
     } finally {
       setActionInProgress(null);
     }
@@ -92,8 +113,28 @@ export function ReviewQueue({ initialReviews }: Props) {
   const rest = reviews.filter((r) => r.status !== 'PENDING');
   const sorted = [...pending, ...rest];
 
+  const socialFailures = Object.entries(socialError);
+
   return (
     <div className="space-y-3">
+      {socialFailures.length > 0 && (
+        <div className="bg-red-950/40 border border-red-800 rounded-lg p-4 space-y-2">
+          <p className="text-sm font-medium text-red-300">
+            Approved, but did not reach Farcaster or X
+          </p>
+          <p className="text-xs text-red-400/80">
+            The post is live on the site. Nothing was cast or tweeted.
+          </p>
+          <ul className="space-y-1">
+            {socialFailures.map(([id, message]) => (
+              <li key={id} className="text-xs text-red-400 font-mono break-all">
+                {message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {sorted.length === 0 && (
         <div className="text-center py-12 text-slate-500">
           <p>No reviews in queue.</p>
