@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { approveInjuryPost } from '@/lib/mcp';
 import { requireMd } from '@/lib/desk-auth';
+import { triggerSocialPublish } from '@/lib/social-publish';
 import { revalidatePath } from 'next/cache';
 
 export async function POST(
@@ -16,27 +17,14 @@ export async function POST(
     const result = await approveInjuryPost(postId);
 
     // Notify agents backend for social publishing (awaited — admin action, latency acceptable)
-    const agentsUrl = process.env.AGENTS_URL ?? 'https://sidelineiq-agents-production.up.railway.app';
-    const socialUrl = `${agentsUrl}/admin/approve/${postId}`;
-    console.log('[Approve] Sending social publish to:', socialUrl);
-    try {
-      const socialRes = await fetch(socialUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.AGENTS_API_SECRET}`,
-        },
-        body: JSON.stringify({ post: result.post ?? result }),
-      });
-      const socialBody = await socialRes.text();
-      console.log(`[Approve] Social publish response: ${socialRes.status} ${socialBody}`);
-    } catch (err) {
-      console.error('[Approve] Failed to trigger social publish:', err);
-    }
+    const social = await triggerSocialPublish(postId, result.post ?? result);
 
     revalidatePath('/post/[slug]', 'page');
     revalidatePath('/');
-    return NextResponse.json(result);
+    // The post IS approved and live on the site either way, so this stays a
+    // 200 — but the response now says whether it reached an audience, instead
+    // of showing the MD a green checkmark regardless.
+    return NextResponse.json({ ...result, social });
   } catch (err) {
     console.error('approve error:', err);
     return NextResponse.json({ error: 'Failed to approve post' }, { status: 500 });
