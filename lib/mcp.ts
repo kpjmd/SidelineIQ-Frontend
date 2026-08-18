@@ -322,6 +322,21 @@ export async function getEntity(entityId: string): Promise<InjuryEntity | null> 
   }
 }
 
+// The entity a post belongs to — as its canonical post OR via an injury_updates
+// link. Used by the reject route to find the thread BEFORE deleting the post:
+// both FKs are ON DELETE SET NULL, so after the delete the linkage is gone and
+// the thread can no longer be found from the post id.
+export async function getEntityForPost(postId: string): Promise<InjuryEntity | null> {
+  try {
+    const result = await callMCPTool<{ entity: InjuryEntity | null }>('web_get_entity_for_post', {
+      post_id: postId,
+    });
+    return result.entity;
+  } catch {
+    return null;
+  }
+}
+
 export async function getPostById(postId: string): Promise<InjuryPost | null> {
   try {
     return await callMCPTool<InjuryPost>('web_get_post', { post_id: postId });
@@ -381,8 +396,13 @@ export async function updateThreadDates(
 export async function closeThread(input: {
   entity_id: string;
   actual_return_date?: string;
-  outcome?: 'RESOLVED' | 'RETIRED';
+  // VOID retracts a thread that should never have existed. It writes no
+  // accuracy_record (mcp migration 020) — never use it for an athlete who
+  // actually returned, and never pass actual_return_date alongside it (the
+  // tool rejects that combination rather than ignoring the field).
+  outcome?: 'RESOLVED' | 'RETIRED' | 'VOID';
   closed_by?: string;
+  void_reason?: string;
 }): Promise<{ entity: InjuryEntity }> {
   return callMCPTool<{ entity: InjuryEntity }>('web_thread_close', { ...input });
 }
