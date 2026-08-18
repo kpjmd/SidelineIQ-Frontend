@@ -118,7 +118,11 @@ export interface CandidateListItem {
 
 // ── Injury entities + timeline (Phase 0 / read tools added in 2E) ────────────
 
-export type EntityStatus = 'ACTIVE' | 'RESOLVED' | 'RETIRED';
+// VOID (mcp migration 020) is not a lifecycle outcome — it means the thread
+// should never have existed (wrong body part, wrong athlete, rejected post).
+// VOID threads carry no accuracy_record and are excluded from entity matching;
+// keep them out of the accuracy views.
+export type EntityStatus = 'ACTIVE' | 'RESOLVED' | 'RETIRED' | 'VOID';
 export type UpdateKind =
   | 'INITIAL'
   | 'TRACKING'
@@ -178,6 +182,8 @@ export interface InjuryEntity {
   returned_at?: string | null;
   closed_at?: string | null;
   needs_date_review?: boolean;
+  // migration 020 — non-null only on status VOID.
+  void_reason?: string | null;
 }
 
 // Shape returned by web_list_threads (entity joined with athlete/team display).
