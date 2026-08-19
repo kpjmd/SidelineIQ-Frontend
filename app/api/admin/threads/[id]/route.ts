@@ -29,7 +29,8 @@ interface ThreadActionBody {
   surgery_date?: string;
   surgery_confirmed?: boolean;
   actual_return_date?: string;
-  outcome?: 'RESOLVED' | 'RETIRED';
+  outcome?: 'RESOLVED' | 'RETIRED' | 'VOID';
+  void_reason?: string;
 }
 
 // POST /api/admin/threads/[id] with { action: 'update_dates' | 'close', ... }.
@@ -60,6 +61,22 @@ export async function POST(
       return NextResponse.json(result);
     }
     if (body.action === 'close') {
+      // VOID is the deliberate retraction: this thread should never have
+      // existed. It is the only way to retire a thread an MD has already
+      // corrected by hand — rejecting that thread's post deliberately leaves it
+      // alone (see shouldVoidThreadOnReject), because a correction is evidence
+      // the injury is real and only the write-up was wrong.
+      if (body.outcome === 'VOID') {
+        const result = await closeThread({
+          entity_id: id,
+          outcome: 'VOID',
+          // No actual_return_date: the tool rejects that pairing outright
+          // rather than ignoring it, and a voided thread never had a return.
+          void_reason: body.void_reason?.trim() || 'Retracted by MD from the Threads tab',
+          closed_by: gate.userId,
+        });
+        return NextResponse.json(result);
+      }
       const result = await closeThread({
         entity_id: id,
         actual_return_date: body.actual_return_date || undefined,
