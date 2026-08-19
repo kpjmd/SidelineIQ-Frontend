@@ -379,6 +379,8 @@ export async function getThread(entityId: string): Promise<ThreadDetail> {
 
 export interface UpdateThreadDatesInput {
   entity_id: string;
+  /** MD identity from the auth gate, for the re-anchor audit row. */
+  updated_by?: string;
   injury_date?: string;
   injury_date_confidence?: DateConfidence;
   surgery_date?: string;

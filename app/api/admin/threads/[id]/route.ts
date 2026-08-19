@@ -50,6 +50,10 @@ export async function POST(
       const confidence = body.injury_date_confidence ?? 'unknown';
       const result = await updateThreadDates({
         entity_id: id,
+        // Identity comes from the auth gate, never the request body — same rule
+        // as closed_by below. It attributes the audit row written when
+        // correcting injury_date re-anchors the thread's OTM projection.
+        updated_by: gate.userId,
         injury_date: body.injury_date || undefined,
         injury_date_confidence: confidence,
         surgery_date: body.surgery_date || undefined,
