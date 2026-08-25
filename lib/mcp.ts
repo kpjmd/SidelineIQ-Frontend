@@ -25,6 +25,7 @@ import type {
   ListPostsFilters,
   MdReview,
   MdReviewStatus,
+  PostStatus,
   PublishResult,
   ThreadDetail,
   ThreadListItem,
@@ -108,11 +109,49 @@ export async function approveInjuryPost(postId: string) {
   );
 }
 
+/**
+ * Hard delete. NOT the reject path any more — see rejectInjuryPost. Kept for
+ * genuine deletions, which is what it was always meant for.
+ */
 export async function deleteInjuryPost(postId: string) {
   return callMCPTool<{ deleted: boolean; post_id: string }>(
     'web_delete_injury_post',
     { post_id: postId },
   );
+}
+
+export interface RejectPostResult {
+  post_id: string;
+  review_id: string | null;
+  /**
+   * False when the post was not PENDING_REVIEW — an already-live post whose
+   * review row was created with preserve_status. The review is still closed and
+   * the post is deliberately untouched. The UI must say so rather than let the
+   * MD believe live content was retracted.
+   */
+  post_updated: boolean;
+  post_status: PostStatus;
+  review_status: MdReviewStatus | null;
+  entity_links_cleared: { canonical: number; updates: number };
+}
+
+/**
+ * Reject a post: the row survives as REJECTED and its review row is closed.
+ *
+ * Replaces deleteInjuryPost on this path. The delete was destroying the only
+ * record that an MD had looked at the story and said no, which is why the agent
+ * re-filed it every 6h forever.
+ *
+ * Void the thread BEFORE calling this — it clears the entity links, after which
+ * the entity cannot be found from the post id.
+ */
+export async function rejectInjuryPost(input: {
+  post_id?: string;
+  review_id?: string;
+  reason?: string;
+  rejected_by: string;
+}): Promise<RejectPostResult> {
+  return callMCPTool<RejectPostResult>('web_reject_injury_post', { ...input });
 }
 
 export async function updateMdReview(

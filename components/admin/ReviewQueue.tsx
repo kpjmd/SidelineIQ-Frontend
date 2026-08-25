@@ -11,6 +11,9 @@ const STATUS_BADGE: Record<string, string> = {
   PENDING: 'bg-amber-900/50 text-amber-400 border-amber-700',
   APPROVED: 'bg-green-900/50 text-green-400 border-green-700',
   REJECTED: 'bg-red-900/50 text-red-400 border-red-700',
+  // Nobody judged this one — a later post simply published first. Slate rather
+  // than red so it does not read as a clinical decision.
+  SUPERSEDED: 'bg-slate-800 text-slate-400 border-slate-600',
 };
 
 interface Props {
@@ -172,6 +175,16 @@ export function ReviewQueue({ initialReviews }: Props) {
                 >
                   {review.status}
                 </span>
+                {review.status === 'SUPERSEDED' && review.superseding_slug && (
+                  <a
+                    href={`/post/${review.superseding_slug}`}
+                    onClick={(e) => e.stopPropagation()}
+                    title="This question was answered by a post that published first"
+                    className="text-xs text-slate-400 hover:text-slate-200 underline"
+                  >
+                    Published instead →
+                  </a>
+                )}
                 {review.status === 'PENDING' && (
                   <div className="flex gap-1.5" onClick={(e) => e.stopPropagation()}>
                     <button
