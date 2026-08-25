@@ -1,8 +1,38 @@
 export type Sport = 'NFL' | 'NBA' | 'PREMIER_LEAGUE' | 'UFC' | 'OTHER';
 export type InjurySeverity = 'MINOR' | 'MODERATE' | 'SEVERE' | 'UNKNOWN';
 export type ContentType = 'BREAKING' | 'TRACKING' | 'DEEP_DIVE' | 'CONFLICT_FLAG';
-export type PostStatus = 'PUBLISHED' | 'PENDING_REVIEW' | 'DRAFT';
-export type MdReviewStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type PostStatus =
+  | 'PUBLISHED'
+  | 'PENDING_REVIEW'
+  | 'DRAFT'
+  | 'REJECTED'
+  | 'SUPERSEDED';
+
+/** SUPERSEDED closes a review row that no MD ever judged. See mcp migration 021. */
+export type MdReviewStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUPERSEDED';
+
+/**
+ * The statuses that mean "this row never reached an audience": an MD rejected
+ * it, or a later post published in its place. Both were added by mcp migration
+ * 021, which stopped rejection from DELETING the row.
+ *
+ * Keeping the row created one regression it is worth being explicit about: a
+ * rejected post used to 404 on the public site only because it no longer
+ * existed. Now it exists, and /post/[slug] would happily render clinical
+ * content the MD binned. isRetiredPostStatus is what stops that.
+ */
+export const RETIRED_POST_STATUSES: readonly PostStatus[] = ['REJECTED', 'SUPERSEDED'];
+
+/**
+ * Named for the RETIRED set, not for "publicly visible", on purpose. The review
+ * queue links the MD to /post/[slug] for a PENDING_REVIEW item, so that status
+ * must keep rendering — and naming this helper the other way round would make
+ * every caller and every test assert something about PENDING_REVIEW that nobody
+ * has decided.
+ */
+export function isRetiredPostStatus(status: string | null | undefined): boolean {
+  return status === 'REJECTED' || status === 'SUPERSEDED';
+}
 
 // ── Auth / identity (Phase 2 foundation) ─────────────────────────────────────
 export type UserRole = 'md' | 'editor';
@@ -47,6 +77,11 @@ export interface InjuryPost {
   version: number;
   parent_post_id: string | null;
   slug: string | null;
+  /** Set on REJECTED and SUPERSEDED rows only (mcp migration 021). */
+  retired_at?: string | null;
+  retirement_reason?: string | null;
+  /** The post that published instead. SUPERSEDED rows only. */
+  superseded_by?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -64,6 +99,10 @@ export interface MdReview {
   sport?: Sport;
   headline?: string;
   slug?: string | null;
+  /** Joined: the post that published instead, for SUPERSEDED rows. The queue
+   *  must link there rather than to its own slug, which now 404s. */
+  superseded_by?: string | null;
+  superseding_slug?: string | null;
 }
 
 export interface FeedResponse {

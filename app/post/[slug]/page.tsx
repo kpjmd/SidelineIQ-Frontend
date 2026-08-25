@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getPostBySlug, listMdReviews } from '@/lib/mcp';
+import { isRetiredPostStatus } from '@/lib/types';
 import { DeepDivePost } from '@/components/post/DeepDivePost';
 
 export const revalidate = 60;
@@ -13,7 +14,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPostBySlug(slug);
-  if (!post) return { title: 'Not Found | SidelineIQ' };
+  if (!post || isRetiredPostStatus(post.status)) return { title: 'Not Found | SidelineIQ' };
 
   const title = `${post.athlete_name} ${post.injury_type} Injury Update | SidelineIQ`;
   const description = post.clinical_summary
@@ -51,6 +52,18 @@ export default async function PostPage({ params }: PageProps) {
   ]);
 
   if (!post) notFound();
+
+  // Before mcp migration 021 a rejected post 404'd here only because the row no
+  // longer existed. Keeping the row is what gives the review queue a memory —
+  // and it also makes clinical content the MD binned publicly fetchable by
+  // slug. This is the guard that stops it.
+  //
+  // Deliberately NOT a blanket non-PUBLISHED 404: the review queue links the MD
+  // to /post/[slug] for a PENDING_REVIEW item, so that status must keep
+  // rendering. Whether it should is a separate question nobody has answered,
+  // and naming the check for the RETIRED set leaves it visibly open rather than
+  // pinning it as deliberate.
+  if (isRetiredPostStatus(post.status)) notFound();
 
   const approvedReview = allReviews.find((r) => r.post_id === post.id) ?? null;
 

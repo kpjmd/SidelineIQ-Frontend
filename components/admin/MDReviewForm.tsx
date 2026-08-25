@@ -37,8 +37,20 @@ export function MDReviewForm({ review, onUpdate }: Props) {
       }
       const updated = await res.json() as MdReview & {
         social?: { ok: boolean; error?: string };
+        post_updated?: boolean;
+        post_status?: string;
       };
       onUpdate(updated);
+      // A review can be attached to an already-PUBLISHED post (the legacy fact
+      // sweep does exactly that), and rejecting one closes the review without
+      // retracting anything. The MD has to know that, or they will believe live
+      // content came down when it did not.
+      if (status === 'REJECTED' && updated.post_updated === false) {
+        setError(
+          `Review rejected. The post is already ${updated.post_status ?? 'live'} and was NOT retracted — use the corrections path to change published content.`,
+        );
+        return;
+      }
       // The review saved and the post went live either way — but if the cast
       // and tweet never happened, the MD needs to see that rather than a clean
       // success. This button did not even attempt a social publish before.

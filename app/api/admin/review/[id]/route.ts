@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateMdReview, getPostById } from '@/lib/mcp';
+import { rejectPost } from '@/lib/reject';
 import { requireMd } from '@/lib/desk-auth';
 import { triggerSocialPublish, type SocialPublishOutcome } from '@/lib/social-publish';
 import { revalidatePath } from 'next/cache';
@@ -15,6 +16,22 @@ export async function PATCH(
   const body = await request.json() as { status: 'APPROVED' | 'REJECTED'; reviewer_notes?: string };
 
   try {
+    // Rejecting from the review form used to mean something different from
+    // rejecting from the queue: updateMdReview sets md_reviews.status and
+    // touches injury_posts only on APPROVED, so the post sat at PENDING_REVIEW
+    // forever — still approvable — and its thread stayed ACTIVE. Two buttons
+    // labelled Reject, two outcomes. Both now go through the same path.
+    if (body.status === 'REJECTED') {
+      const rejected = await rejectPost({
+        reviewId: id,
+        mdUserId: gate.userId,
+        ...(body.reviewer_notes ? { reason: body.reviewer_notes } : {}),
+      });
+      revalidatePath('/post/[slug]', 'page');
+      revalidatePath('/');
+      return NextResponse.json(rejected);
+    }
+
     const result = await updateMdReview(id, body.status, body.reviewer_notes);
 
     // Approving here has exactly the same consequence as the review queue's
