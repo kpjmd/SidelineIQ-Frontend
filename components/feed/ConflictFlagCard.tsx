@@ -3,6 +3,7 @@ import { formatDistanceToNow } from 'date-fns';
 import type { InjuryPost } from '@/lib/types';
 import { SportBadge } from '@/components/shared/SportBadge';
 import { OTMSignature } from '@/components/shared/OTMSignature';
+import { describePostConflictGap } from '@/lib/conflict-gap-display';
 
 export function ConflictFlagCard({ post }: { post: InjuryPost }) {
   const slug = post.slug ?? post.id;
@@ -12,10 +13,11 @@ export function ConflictFlagCard({ post }: { post: InjuryPost }) {
       ? `${post.return_to_play_min_weeks}–${post.return_to_play_max_weeks} weeks`
       : 'See full report';
 
-  const gap =
-    post.team_timeline_weeks !== null && post.return_to_play_min_weeks !== null
-      ? post.return_to_play_min_weeks - post.team_timeline_weeks
-      : null;
+  // `min - team` subtracted a remaining-weeks figure from a total-from-injury
+  // one, so the discrepancy GREW on its own as an injury aged, with no data
+  // change — a post correctly under threshold at publication would silently
+  // start asserting a clinical conflict weeks later.
+  const { label, tone } = describePostConflictGap(post);
 
   return (
     <article className="bg-slate-900 border-2 border-rose-800 rounded-lg overflow-hidden hover:border-rose-700 transition-colors">
@@ -38,19 +40,30 @@ export function ConflictFlagCard({ post }: { post: InjuryPost }) {
           <div className="flex justify-between">
             <span className="text-slate-400">Team timeline</span>
             <span className="text-white font-medium">
-              {post.team_timeline_weeks !== null ? `${post.team_timeline_weeks} weeks` : 'Undisclosed'}
+              {post.team_timeline_weeks !== null
+                ? `${post.team_timeline_weeks} weeks remaining`
+                : 'Undisclosed'}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-400">OTM estimate</span>
             <span className="text-rose-400 font-medium">{otmEstimate}</span>
           </div>
-          {gap !== null && gap > 2 && (
-            <div className="flex justify-between pt-1 border-t border-rose-800/30">
-              <span className="text-slate-400">Discrepancy</span>
-              <span className="text-rose-300 font-bold">&gt;2 weeks — conflict threshold met</span>
-            </div>
-          )}
+          {/* Shown for every status, not only above threshold: a card that
+              printed nothing when the gap was uncomputable was indistinguishable
+              from one where the timelines agreed. */}
+          <div className="flex justify-between pt-1 border-t border-rose-800/30">
+            <span className="text-slate-400">Discrepancy</span>
+            <span
+              className={
+                tone === 'conflict'
+                  ? 'text-rose-300 font-bold text-right'
+                  : 'text-slate-400 text-right'
+              }
+            >
+              {label}
+            </span>
+          </div>
         </div>
 
         {post.conflict_reason && (

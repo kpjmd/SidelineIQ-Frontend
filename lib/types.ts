@@ -70,7 +70,14 @@ export interface InjuryPost {
   md_review_reason: string | null;
   md_review_confidence: number | null;
   conflict_reason: string | null;
+  /**
+   * Weeks the team said REMAIN, as of created_at. NOT total time since the
+   * injury — the RTP week bounds above are on that other clock, and comparing
+   * the two directly is off by the elapsed time since injury_date.
+   */
   team_timeline_weeks: number | null;
+  /** The RTP window's anchor. Required to compute any conflict gap. */
+  injury_date: string | null;
   // Legacy fact-sweep tracking (web_get_post returns these; FactValidationPanel reads them).
   corrected_at?: string | null;
   correction_count?: number | null;
