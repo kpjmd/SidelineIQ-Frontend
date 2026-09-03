@@ -81,6 +81,8 @@ export function DeepDivePost({ post, approvedReview }: Props) {
           team_timeline_weeks={post.team_timeline_weeks}
           return_to_play_min_weeks={post.return_to_play_min_weeks}
           return_to_play_max_weeks={post.return_to_play_max_weeks}
+          injury_date={post.injury_date}
+          created_at={post.created_at}
         />
       )}
 

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import type { ContentType, FeedResponse, InjuryPost, Sport } from '@/lib/types';
 import { SportBadge } from '@/components/shared/SportBadge';
+import { describePostConflictGap } from '@/lib/conflict-gap-display';
 
 const CONTENT_TYPES: ContentType[] = ['CONFLICT_FLAG', 'BREAKING', 'TRACKING', 'DEEP_DIVE'];
 const SPORTS: Sport[] = ['NFL', 'NBA', 'PREMIER_LEAGUE', 'UFC'];
@@ -124,10 +125,10 @@ export function PostBrowser() {
       )}
 
       {posts.map((post) => {
-        const gap =
-          post.team_timeline_weeks != null && post.return_to_play_max_weeks != null
-            ? post.return_to_play_max_weeks - post.team_timeline_weeks
-            : null;
+        // This badge used max_weeks while the post page used min_weeks and the
+        // detector used the midpoint, so one post could show three different
+        // numbers. All three now read the same helper.
+        const { badge, tone, label, unavailableReason } = describePostConflictGap(post);
         return (
           <div key={post.id} className="bg-slate-900 border border-slate-700 rounded-lg p-4">
             <div className="flex items-center gap-3">
@@ -138,11 +139,14 @@ export function PostBrowser() {
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-xs text-slate-600">{post.content_type}</span>
-                {gap != null && (
-                  <span className="text-xs text-amber-400 tabular-nums" title="team weeks vs OTM max weeks">
-                    Δ{gap >= 0 ? '+' : ''}{gap}w
-                  </span>
-                )}
+                <span
+                  className={`text-xs tabular-nums ${
+                    tone === 'conflict' ? 'text-amber-400' : 'text-slate-600'
+                  }`}
+                  title={unavailableReason ?? label}
+                >
+                  {badge}
+                </span>
                 {promotedIds.has(post.id) ? (
                   <span className="px-3 py-1 text-xs font-medium rounded bg-indigo-900/60 text-indigo-300 border border-indigo-700">
                     Promoted ✓
