@@ -5,7 +5,7 @@
 SidelineIQ is an autonomous AI sports injury intelligence platform. The web frontend
 is the authoritative publishing surface — it receives the best version of every
 OTM (OrthoTriage Master) post, supports an optional physician MD Review block
-(web-only, DEEP_DIVE only), and drives SEO traffic that converts to OrthoIQ.
+(web-only, DEEP_DIVE only), and drives SEO traffic that converts to AequOs (formerly OrthoIQ).
 
 ---
 
@@ -49,7 +49,7 @@ sidelineiq-frontend/
 │   │   ├── DeepDivePost.tsx        # Full expanded version
 │   │   ├── MDReviewBlock.tsx
 │   │   ├── ConflictGapDisplay.tsx
-│   │   └── OrthoIQCTA.tsx
+│   │   └── AequOsCTA.tsx
 │   ├── admin/
 │   │   ├── ReviewQueue.tsx
 │   │   └── MDReviewForm.tsx
@@ -195,12 +195,12 @@ NEXT_PUBLIC_SITE_URL=https://sidelineiq.com
 - Full markdown render of `body` using `react-markdown` + `remark-gfm`
 - Renders the classification table as a real HTML table
 - `ConflictGapDisplay` if `conflict_reason` is present
-- `MDReviewBlock` if `is_approved === true` (renders at bottom, before OrthoIQ CTA)
-- `OrthoIQCTA` section always present at the bottom of DEEP_DIVE
+- `MDReviewBlock` if `is_approved === true` (renders at bottom, before AequOs CTA)
+- `AequOsCTA` section always present at the bottom of DEEP_DIVE
 
 **For CONFLICT_FLAG posts:**
 - Full markdown render with `ConflictGapDisplay` prominently featured
-- OrthoIQ CTA present
+- AequOs CTA present
 
 **SEO metadata** (`generateMetadata`):
 ```typescript
@@ -317,7 +317,7 @@ Visual specification:
 - Warm left-border accent (amber or warm gold — distinct from the clinical blue of OTM content above)
 - "MD REVIEW" label in small caps / all-caps tracking
 - `reviewer_note` text (1–3 sentences)
-- Byline: "Keith Kenter, MD · Physician Founder" with small OrthoIQ wordmark/link
+- Byline: "KPJMD · Physician Founder" with small AequOs wordmark/link (aequos.io?ref=sidelineiq)
 - Full-width horizontal rule below
 - Background: slightly warm tint (off-white / very light amber in light mode; slightly warm dark in dark mode)
 
@@ -346,7 +346,7 @@ Display as a styled card with coral/red border.
 
 ---
 
-### `OrthoIQCTA` (sub-component, bottom of all DEEP_DIVE post pages)
+### `AequOsCTA` (sub-component, bottom of all DEEP_DIVE post pages)
 
 Visual: Clean separator section. Not intrusive.
 
@@ -354,11 +354,11 @@ Content:
 ```
 Have a musculoskeletal injury or question?
 
-OrthoIQ brings the same clinical intelligence to your situation.
+AequOs brings the same clinical intelligence to your situation.
 Consult with AI trained on orthopedic expertise — built by the
 same physician behind SidelineIQ.
 
-[Get Clinical Guidance →]   →  links to OrthoIQ
+[Get Clinical Guidance →]   →  links to AequOs
 ```
 
 The physician founder connection is visible here — "built by the same physician behind SidelineIQ" — without making it the headline.
@@ -424,19 +424,19 @@ This can be added to the Railway backend's publish pipeline — note for that se
 
 ## Branding Notes
 
-SidelineIQ is visually independent from OrthoIQ. No shared design tokens, no OrthoIQ header/footer chrome.
+SidelineIQ is visually independent from AequOs. No shared design tokens, no AequOs header/footer chrome.
 
 Design direction: **clinical sports intelligence** — not a sports blog, not a medical journal. Think:
 - Dark/near-dark default palette (sports media convention)
 - Strong typographic hierarchy
-- Sport badges use team-sport color conventions (not OrthoIQ's palette)
+- Sport badges use team-sport color conventions (not AequOs's palette)
 - The 🚩 emoji is a recurring brand signal — it should be visually prominent in `ConflictFlagCard`
 - "OrthoTriage Master" and "OTM" are the AI voice — never "Claude" or "AI"
 
-OrthoIQ connection:
-- Visible only in the `OrthoIQCTA` block at the bottom of DEEP_DIVE post pages
-- The `MDReviewBlock` byline references "Physician Founder" with OrthoIQ link
-- No OrthoIQ branding in header, nav, or feed
+AequOs connection:
+- Visible only in the `AequOsCTA` block at the bottom of DEEP_DIVE post pages
+- The `MDReviewBlock` byline references "Physician Founder" with AequOs link
+- No AequOs branding in header, nav, or feed
 
 ---
 
@@ -452,7 +452,7 @@ OrthoIQ connection:
 8. **Four card components** — `BreakingCard`, `TrackingCard`, `DeepDiveCard`, `ConflictFlagCard`
 9. **`FilterBar` + `PostFeed`** — feed orchestration
 10. **Feed page (`app/page.tsx`)** — wired up with ISR
-11. **Post page (`app/post/[slug]/page.tsx`)** — full render with `MDReviewBlock`, `OrthoIQCTA`, SEO metadata
+11. **Post page (`app/post/[slug]/page.tsx`)** — full render with `MDReviewBlock`, `AequOsCTA`, SEO metadata
 12. **`ConflictGapDisplay`** — standalone sub-component
 13. **Admin page** — `ReviewQueue` + `MDReviewForm` + approve flow
 14. **`sitemap.ts`** + `robots.ts`

@@ -26,12 +26,12 @@ export function MDReviewBlock({ review }: { review: MdReview }) {
             <p className="text-xs text-slate-500">
               Physician Founder ·{' '}
               <a
-                href="https://orthoiq.io"
+                href="https://aequos.io?ref=sidelineiq"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-amber-600 hover:text-amber-500 transition-colors"
               >
-                OrthoIQ
+                AequOs
               </a>
             </p>
           </div>
