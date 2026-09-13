@@ -15,7 +15,6 @@ import type {
   DeskPostUpdate,
   DeskSections,
   DeskUser,
-  EntityStatus,
   KpjmdLiveResult,
   FeedResponse,
   InjuryEntity,
@@ -30,6 +29,7 @@ import type {
   ThreadDetail,
   ThreadListItem,
 } from './types';
+import { listAllThreadPages, type ThreadFilters, type ThreadPage } from './thread-paging';
 
 const WEB_MCP_URL = process.env.WEB_MCP_URL!;
 const MCP_AUTH_SECRET = process.env.MCP_AUTH_SECRET;
@@ -399,17 +399,14 @@ export async function listInjuryUpdates(entityId: string): Promise<InjuryUpdate[
 // Read tools power the MD dashboard "Threads" tab; write tools (update_dates,
 // close) are invoked only from server-side /api/admin/threads/* handlers.
 
-export async function listThreads(filters: {
-  status?: EntityStatus;
-  needs_date_review?: boolean;
-  limit?: number;
-} = {}): Promise<ThreadListItem[]> {
-  const args: Record<string, unknown> = {};
-  if (filters.status) args.status = filters.status;
-  if (filters.needs_date_review !== undefined) args.needs_date_review = filters.needs_date_review;
-  if (filters.limit !== undefined) args.limit = filters.limit;
-  const result = await callMCPTool<{ threads: ThreadListItem[] }>('web_list_threads', args);
-  return result.threads;
+// Every matching thread, paged — or a thrown ThreadListTruncatedError. There is
+// deliberately no single-page variant: the one that existed took the server's
+// default limit of 100 and handed back a short list that looked complete.
+export async function listThreads(filters: ThreadFilters = {}): Promise<ThreadListItem[]> {
+  return listAllThreadPages(
+    (args) => callMCPTool<ThreadPage>('web_list_threads', args),
+    filters,
+  );
 }
 
 export async function getThread(entityId: string): Promise<ThreadDetail> {
