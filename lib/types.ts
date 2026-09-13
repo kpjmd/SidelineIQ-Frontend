@@ -1,6 +1,7 @@
 export type Sport = 'NFL' | 'NBA' | 'PREMIER_LEAGUE' | 'UFC' | 'OTHER';
 export type InjurySeverity = 'MINOR' | 'MODERATE' | 'SEVERE' | 'UNKNOWN';
 export type ContentType = 'BREAKING' | 'TRACKING' | 'DEEP_DIVE' | 'CONFLICT_FLAG';
+export type SubjectKind = 'INJURY_TYPE' | 'ATHLETE';
 export type PostStatus =
   | 'PUBLISHED'
   | 'PENDING_REVIEW'
@@ -84,6 +85,13 @@ export interface InjuryPost {
   version: number;
   parent_post_id: string | null;
   slug: string | null;
+  /**
+   * What the post is ABOUT (mcp migration 023), recorded by the agent that
+   * produced it. NULL on every row written before 023; absent from an mcp that
+   * predates it. Only INJURY_TYPE on a DEEP_DIVE permits the commercial CTA —
+   * see lib/referral-cta.ts.
+   */
+  subject_kind?: SubjectKind | null;
   /** Set on REJECTED and SUPERSEDED rows only (mcp migration 021). */
   retired_at?: string | null;
   retirement_reason?: string | null;

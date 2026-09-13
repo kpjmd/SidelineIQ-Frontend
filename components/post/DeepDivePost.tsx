@@ -8,6 +8,7 @@ import { ReturnToPlayDisplay } from '@/components/shared/ReturnToPlayDisplay';
 import { ConflictGapDisplay } from './ConflictGapDisplay';
 import { MDReviewBlock } from './MDReviewBlock';
 import { AequOsCTA } from './AequOsCTA';
+import { showsReferralCta } from '@/lib/referral-cta';
 import { markdownComponents } from '@/lib/markdown-components';
 import { stripOTMAnnotations } from '@/lib/strip-otm';
 
@@ -107,8 +108,8 @@ export function DeepDivePost({ post, approvedReview }: Props) {
       {/* MD Review block */}
       {approvedReview && <MDReviewBlock review={approvedReview} />}
 
-      {/* AequOs CTA */}
-      <AequOsCTA />
+      {/* AequOs CTA — injury-type-led DEEP_DIVE only (lib/referral-cta.ts) */}
+      {showsReferralCta(post) && <AequOsCTA />}
     </article>
   );
 }
