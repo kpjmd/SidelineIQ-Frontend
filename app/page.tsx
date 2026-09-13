@@ -72,7 +72,10 @@ export default async function FeedPage({ searchParams }: PageProps) {
       <footer className="border-t border-slate-800 mt-16">
         <div className="max-w-3xl mx-auto px-4 py-6 text-center">
           <p className="text-xs text-slate-600">
-            SidelineIQ · Clinical intelligence for the sports world · Not medical advice
+            SidelineIQ · Clinical intelligence for the sports world · Not medical advice ·{' '}
+            <Link href="/privacy" className="hover:text-slate-400 transition-colors">
+              Privacy
+            </Link>
           </p>
         </div>
       </footer>

@@ -30,6 +30,8 @@ import type {
   ThreadListItem,
 } from './types';
 import { listAllThreadPages, type ThreadFilters, type ThreadPage } from './thread-paging';
+import type { CtaClickSummary, ManualMetric, MetricSnapshot } from './metrics-summary';
+import type { CtaLink } from './cta-click';
 
 const WEB_MCP_URL = process.env.WEB_MCP_URL!;
 const MCP_AUTH_SECRET = process.env.MCP_AUTH_SECRET;
@@ -443,4 +445,42 @@ export async function closeThread(input: {
   void_reason?: string;
 }): Promise<{ entity: InjuryEntity }> {
   return callMCPTool<{ entity: InjuryEntity }>('web_thread_close', { ...input });
+}
+
+// ── Baseline metrics (monetization plan Phase 0.3, mcp migration 024) ────────
+// Follower counts are written by the agents' daily snapshot loop; the frontend
+// only reads them, records the monthly web numbers typed in from the Vercel
+// dashboard, and counts AequOs link clicks from the /go/aequos redirect.
+
+export async function listMetricSnapshots(since?: string): Promise<MetricSnapshot[]> {
+  const result = await callMCPTool<{ snapshots: MetricSnapshot[] }>(
+    'web_list_metric_snapshots',
+    since ? { since } : {},
+  );
+  return result.snapshots;
+}
+
+export async function recordManualMetric(input: {
+  metric: ManualMetric;
+  value: number;
+  day?: string;
+  /** MD identity from the auth gate, stored beside the value. */
+  recorded_by: string;
+}): Promise<MetricSnapshot> {
+  const args: Record<string, unknown> = {
+    metric: input.metric,
+    value: input.value,
+    source: 'manual',
+    detail: { recorded_by: input.recorded_by },
+  };
+  if (input.day) args.day = input.day;
+  return callMCPTool<MetricSnapshot>('web_record_metric_snapshot', args);
+}
+
+export async function listCtaClicks(since?: string): Promise<CtaClickSummary> {
+  return callMCPTool<CtaClickSummary>('web_list_cta_clicks', since ? { since } : {});
+}
+
+export async function incrementCtaClick(postSlug: string, link: CtaLink): Promise<{ counted: boolean }> {
+  return callMCPTool<{ counted: boolean }>('web_increment_cta_click', { post_slug: postSlug, link });
 }
