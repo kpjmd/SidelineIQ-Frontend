@@ -8,6 +8,7 @@ import type {
   ThreadListItem,
 } from '@/lib/types';
 import { SportBadge } from '@/components/shared/SportBadge';
+import { computeAccuracyStats } from '@/lib/accuracy-stats';
 
 type View = 'active' | 'date_review' | 'accuracy';
 
@@ -360,15 +361,8 @@ function AccuracyView({ threads, loading }: { threads: ThreadListItem[]; loading
   if (loading && threads.length === 0) {
     return <p className="text-center py-12 text-slate-500 text-sm">Loading…</p>;
   }
-  const withRecord = threads.filter((t) => t.accuracy_record?.error_days != null);
-  const mae =
-    withRecord.length > 0
-      ? Math.round(
-          withRecord.reduce((sum, t) => sum + Math.abs(t.accuracy_record!.error_days!), 0) /
-            withRecord.length,
-        )
-      : null;
-  const withinCount = threads.filter((t) => t.accuracy_record?.within_range === true).length;
+  const { mae, withinCount, withinDenominator, excluded } = computeAccuracyStats(threads);
+  const excludedTotal = excluded.retired + excluded.noRecord;
 
   if (threads.length === 0) {
     return (
@@ -388,10 +382,17 @@ function AccuracyView({ threads, loading }: { threads: ThreadListItem[]; loading
         </div>
         <div>
           <p className="text-2xl font-black text-white tabular-nums">
-            {withinCount}/{threads.length}
+            {withinCount}/{withinDenominator}
           </p>
           <p className="text-xs text-slate-500">returns within OTM window</p>
         </div>
+        {excludedTotal > 0 && (
+          <p className="ml-auto text-xs text-slate-500 text-right">
+            {excludedTotal} excluded
+            <br />
+            {excluded.retired} retired · {excluded.noRecord} no record
+          </p>
+        )}
       </div>
 
       {threads.map((t) => {

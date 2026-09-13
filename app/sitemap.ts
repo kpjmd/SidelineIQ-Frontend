@@ -1,8 +1,9 @@
 import type { MetadataRoute } from 'next';
 import { listPosts } from '@/lib/mcp';
+import { siteUrl as resolveSite } from '@/lib/site-url';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://sidelineiq.com';
+  const siteUrl = resolveSite();
 
   // Fetch all published posts (paginate if needed)
   const first = await listPosts({ status: 'PUBLISHED', limit: 50, offset: 0 });
