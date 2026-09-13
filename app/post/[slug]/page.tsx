@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { getPostBySlug, listMdReviews } from '@/lib/mcp';
 import { isRetiredPostStatus } from '@/lib/types';
 import { DeepDivePost } from '@/components/post/DeepDivePost';
+import { siteUrl as resolveSite } from '@/lib/site-url';
 
 export const revalidate = 60;
 
@@ -21,13 +22,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     .replace(/\[([A-Z][A-Z\s/]+):[^\]]*\]/g, '')
     .replace(/[#*_`]/g, '')
     .slice(0, 160);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://sidelineiq.com';
+  const siteUrl = resolveSite();
 
   return {
     title,
     description,
     alternates: { canonical: `${siteUrl}/post/${slug}` },
+    // og:image and twitter:image come from the colocated opengraph-image.tsx /
+    // twitter-image.tsx; file-based metadata outranks anything set here.
     openGraph: {
+      url: `${siteUrl}/post/${slug}`,
       title: post.headline,
       description,
       type: 'article',
@@ -36,7 +40,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       siteName: 'SidelineIQ',
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title: post.headline,
       description,
     },
@@ -67,7 +71,7 @@ export default async function PostPage({ params }: PageProps) {
 
   const approvedReview = allReviews.find((r) => r.post_id === post.id) ?? null;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://sidelineiq.com';
+  const siteUrl = resolveSite();
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',

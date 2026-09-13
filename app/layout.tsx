@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
+import { siteUrl } from '@/lib/site-url';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -13,6 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  // Absolute base for the generated og:image / twitter:image URLs.
+  metadataBase: new URL(siteUrl()),
   title: 'SidelineIQ — Clinical Sports Injury Intelligence',
   description:
     'Autonomous AI-powered sports injury analysis with return-to-play timelines, clinical breakdowns, and conflict detection across NFL, NBA, Premier League, and UFC.',
