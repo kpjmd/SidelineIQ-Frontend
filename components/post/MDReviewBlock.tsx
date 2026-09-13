@@ -1,6 +1,10 @@
 import type { MdReview } from '@/lib/types';
+import { aequosClickHref } from '@/lib/cta-click';
 
-export function MDReviewBlock({ review }: { review: MdReview }) {
+// The AequOs byline is attribution, not an ask, so it is not gated by
+// showsReferralCta — but it goes through /go/aequos too (from=byline) so the
+// two links can be told apart in the click counts.
+export function MDReviewBlock({ review, slug }: { review: MdReview; slug: string | null }) {
   return (
     <div className="my-8">
       {/* Top rule */}
@@ -26,9 +30,9 @@ export function MDReviewBlock({ review }: { review: MdReview }) {
             <p className="text-xs text-slate-500">
               Physician Founder ·{' '}
               <a
-                href="https://aequos.io?ref=sidelineiq"
+                href={aequosClickHref(slug, 'byline')}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="nofollow noopener"
                 className="text-amber-600 hover:text-amber-500 transition-colors"
               >
                 AequOs

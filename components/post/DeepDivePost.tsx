@@ -106,10 +106,10 @@ export function DeepDivePost({ post, approvedReview }: Props) {
       />
 
       {/* MD Review block */}
-      {approvedReview && <MDReviewBlock review={approvedReview} />}
+      {approvedReview && <MDReviewBlock review={approvedReview} slug={post.slug} />}
 
       {/* AequOs CTA — injury-type-led DEEP_DIVE only (lib/referral-cta.ts) */}
-      {showsReferralCta(post) && <AequOsCTA />}
+      {showsReferralCta(post) && <AequOsCTA slug={post.slug} />}
     </article>
   );
 }

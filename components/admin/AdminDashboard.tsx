@@ -9,8 +9,9 @@ import { ReviewQueue } from '@/components/admin/ReviewQueue';
 import { PostBrowser } from '@/components/admin/PostBrowser';
 import { CandidatesQueue } from '@/components/admin/CandidatesQueue';
 import { ThreadsQueue } from '@/components/admin/ThreadsQueue';
+import { MetricsView } from '@/components/admin/MetricsView';
 
-type Tab = 'reviews' | 'promote' | 'candidates' | 'threads';
+type Tab = 'reviews' | 'promote' | 'candidates' | 'threads' | 'metrics';
 
 interface Props {
   initialReviews: MdReview[];
@@ -101,6 +102,7 @@ export function AdminDashboard({
             ['promote', 'Promote'],
             ['candidates', `Candidates · ${candidates.length}`],
             ['threads', `Threads${initialDateReviewCount > 0 ? ` · ${initialDateReviewCount}!` : ''}`],
+            ['metrics', 'Metrics'],
           ] as [Tab, string][]).map(([key, label]) => (
             <button
               key={key}
@@ -142,6 +144,7 @@ export function AdminDashboard({
           />
         )}
         {tab === 'threads' && <ThreadsQueue initialActive={initialThreads} />}
+        {tab === 'metrics' && <MetricsView />}
       </main>
     </div>
   );
