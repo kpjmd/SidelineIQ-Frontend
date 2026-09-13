@@ -7,7 +7,7 @@ import { ContentTypeBadge } from '@/components/shared/ContentTypeBadge';
 import { ReturnToPlayDisplay } from '@/components/shared/ReturnToPlayDisplay';
 import { ConflictGapDisplay } from './ConflictGapDisplay';
 import { MDReviewBlock } from './MDReviewBlock';
-import { OrthoIQCTA } from './OrthoIQCTA';
+import { AequOsCTA } from './AequOsCTA';
 import { markdownComponents } from '@/lib/markdown-components';
 import { stripOTMAnnotations } from '@/lib/strip-otm';
 
@@ -107,8 +107,8 @@ export function DeepDivePost({ post, approvedReview }: Props) {
       {/* MD Review block */}
       {approvedReview && <MDReviewBlock review={approvedReview} />}
 
-      {/* OrthoIQ CTA */}
-      <OrthoIQCTA />
+      {/* AequOs CTA */}
+      <AequOsCTA />
     </article>
   );
 }
