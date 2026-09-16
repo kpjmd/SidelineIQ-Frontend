@@ -75,3 +75,36 @@ describe('mean absolute error', () => {
     expect(s.withinDenominator).toBe(0);
   });
 });
+
+describe('unscoreable reasons', () => {
+  it('names why an excluded thread was excluded, when the record says so', () => {
+    // mcp writes `scoreable: false` plus a reason where it used to write a
+    // record of nulls, so "we got it wrong" and "we never had the inputs to
+    // score it" stopped being the same row.
+    const s = computeAccuracyStats([
+      thread('a', 'RESOLVED', { within_range: true, error_days: 2 }),
+      thread('b', 'RESOLVED', { scoreable: false, unscoreable_reason: 'no_projection' }),
+      thread('c', 'RESOLVED', { scoreable: false, unscoreable_reason: 'no_injury_date' }),
+      thread('d', 'RETIRED', { scoreable: false, unscoreable_reason: 'no_actual_return_date' }),
+    ]);
+    expect(s.withinDenominator).toBe(1);
+    expect(s.unscoreableReasons).toEqual({
+      no_projection: 1,
+      no_injury_date: 1,
+      no_actual_return_date: 1,
+    });
+    // The old buckets still hold, because they are the only thing a
+    // pre-2026-09-15 row can answer.
+    expect(s.excluded).toEqual({ retired: 1, noRecord: 2 });
+  });
+
+  it('treats an absent scoreable as "derive it", never as false', () => {
+    // Every row written before mcp shipped the field.
+    const s = computeAccuracyStats([
+      thread('a', 'RESOLVED', { within_range: true, error_days: 1 }),
+      thread('b', 'RESOLVED', { within_range: false, error_days: 30 }),
+    ]);
+    expect(s.withinDenominator).toBe(2);
+    expect(s.unscoreableReasons).toEqual({});
+  });
+});

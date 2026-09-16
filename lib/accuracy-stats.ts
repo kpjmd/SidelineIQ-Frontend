@@ -15,7 +15,7 @@
  * Pure, and imported relatively for the same no-alias-under-vitest reason as
  * lib/reject.ts.
  */
-import type { ThreadListItem } from './types';
+import type { ThreadListItem, UnscoreableReason } from './types';
 
 export interface AccuracyStats {
   /** Threads whose record says within_range === true. */
@@ -28,6 +28,16 @@ export interface AccuracyStats {
   maeCount: number;
   /** Closed threads no within_range verdict was computed for. */
   excluded: { retired: number; noRecord: number };
+  /**
+   * Why the excluded ones were excluded, when the record says so.
+   *
+   * mcp now writes `scoreable: false` plus a reason where it used to write a
+   * record whose fields were all null (or no record at all), so "we got it
+   * wrong" and "we never had the inputs" stopped being the same row. Empty for
+   * a corpus of pre-2026-09-15 rows, which is why it supplements the two counts
+   * above rather than replacing them.
+   */
+  unscoreableReasons: Partial<Record<UnscoreableReason, number>>;
 }
 
 export function computeAccuracyStats(threads: ThreadListItem[]): AccuracyStats {
@@ -37,6 +47,7 @@ export function computeAccuracyStats(threads: ThreadListItem[]): AccuracyStats {
   let maeCount = 0;
   let retired = 0;
   let noRecord = 0;
+  const unscoreableReasons: Partial<Record<UnscoreableReason, number>> = {};
 
   for (const t of threads) {
     const rec = t.accuracy_record;
@@ -45,10 +56,13 @@ export function computeAccuracyStats(threads: ThreadListItem[]): AccuracyStats {
     if (verdict === true || verdict === false) {
       withinDenominator++;
       if (verdict) withinCount++;
-    } else if (t.status === 'RETIRED') {
-      retired++;
     } else {
-      noRecord++;
+      // A named reason is better than a bucket, but the buckets stay: they are
+      // the only thing a pre-2026-09-15 row can answer.
+      const reason = rec?.unscoreable_reason;
+      if (reason) unscoreableReasons[reason] = (unscoreableReasons[reason] ?? 0) + 1;
+      if (t.status === 'RETIRED') retired++;
+      else noRecord++;
     }
 
     const err = rec?.error_days;
@@ -64,5 +78,6 @@ export function computeAccuracyStats(threads: ThreadListItem[]): AccuracyStats {
     mae: maeCount > 0 ? Math.round(errorSum / maeCount) : null,
     maeCount,
     excluded: { retired, noRecord },
+    unscoreableReasons,
   };
 }

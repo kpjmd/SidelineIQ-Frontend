@@ -112,7 +112,16 @@ export function ThreadsQueue({ initialActive }: Props) {
       {error && <p className="mb-3 text-xs text-red-400">{error}</p>}
 
       {view === 'accuracy' ? (
-        <AccuracyView threads={threads} loading={loading} />
+        <AccuracyView
+          threads={threads}
+          loading={loading}
+          // A reopened thread leaves this view and rejoins `active`, so both
+          // lists are stale — reload the one on screen and drop the other.
+          onReopened={() => {
+            setByView((prev) => ({ ...prev, active: null }));
+            void load('accuracy');
+          }}
+        />
       ) : (
         <ThreadList threads={threads} view={view} loading={loading} onChanged={refreshCurrent} />
       )}
@@ -357,12 +366,66 @@ function ThreadCard({
   );
 }
 
-function AccuracyView({ threads, loading }: { threads: ThreadListItem[]; loading: boolean }) {
+const UNSCOREABLE_LABEL: Record<string, string> = {
+  no_projection: 'no OTM window',
+  no_injury_date: 'no injury date',
+  no_actual_return_date: 'no return recorded',
+};
+
+function AccuracyView({
+  threads,
+  loading,
+  onReopened,
+}: {
+  threads: ThreadListItem[];
+  loading: boolean;
+  onReopened: () => void;
+}) {
+  const [reopening, setReopening] = useState<string | null>(null);
+  const [reopenError, setReopenError] = useState<string | null>(null);
+
+  // The undo for a wrong close. The detector writes actual_return_date on a
+  // timer, and a close is otherwise terminal — before mcp grew
+  // web_thread_reopen there was no path back to ACTIVE through any tool.
+  async function reopen(t: ThreadListItem): Promise<void> {
+    const reason = window.prompt(
+      `Reopen ${t.athlete_name ?? 'this thread'}? Say why — it is the only durable record of the reversal.`,
+    );
+    if (reason == null) return;
+    if (!reason.trim()) {
+      setReopenError('A reason is required.');
+      return;
+    }
+    setReopening(t.id);
+    setReopenError(null);
+    try {
+      const res = await fetch(`/api/admin/threads/${t.id}/reopen`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        setReopenError(body.error ?? `Reopen failed (${res.status})`);
+        return;
+      }
+      onReopened();
+    } catch (err) {
+      setReopenError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setReopening(null);
+    }
+  }
+
   if (loading && threads.length === 0) {
     return <p className="text-center py-12 text-slate-500 text-sm">Loading…</p>;
   }
-  const { mae, withinCount, withinDenominator, excluded } = computeAccuracyStats(threads);
+  const { mae, withinCount, withinDenominator, excluded, unscoreableReasons } =
+    computeAccuracyStats(threads);
   const excludedTotal = excluded.retired + excluded.noRecord;
+  const reasonSummary = Object.entries(unscoreableReasons)
+    .map(([reason, n]) => `${n} ${UNSCOREABLE_LABEL[reason] ?? reason}`)
+    .join(' · ');
 
   if (threads.length === 0) {
     return (
@@ -391,9 +454,21 @@ function AccuracyView({ threads, loading }: { threads: ThreadListItem[]; loading
             {excludedTotal} excluded
             <br />
             {excluded.retired} retired · {excluded.noRecord} no record
+            {reasonSummary && (
+              <>
+                <br />
+                {reasonSummary}
+              </>
+            )}
           </p>
         )}
       </div>
+
+      {reopenError && (
+        <p className="text-xs text-red-400 border border-red-900 bg-red-950/40 rounded px-3 py-2">
+          {reopenError}
+        </p>
+      )}
 
       {threads.map((t) => {
         const rec = t.accuracy_record;
@@ -419,8 +494,22 @@ function AccuracyView({ threads, loading }: { threads: ThreadListItem[]; loading
               >
                 {rec?.error_days != null ? `${rec.error_days > 0 ? '+' : ''}${rec.error_days}d` : 'no record'}
                 {rec?.within_range === true ? ' · within window' : rec?.within_range === false ? ' · outside window' : ''}
+                {rec?.scoreable === false && rec.unscoreable_reason
+                  ? ` · ${UNSCOREABLE_LABEL[rec.unscoreable_reason] ?? rec.unscoreable_reason}`
+                  : ''}
               </p>
             </div>
+            {/* VOID is not reopenable and never reaches this view (it lists
+                RESOLVED + RETIRED), so the button is always applicable here. */}
+            <button
+              type="button"
+              onClick={() => void reopen(t)}
+              disabled={reopening === t.id}
+              className="text-xs px-2 py-1 rounded border border-slate-600 text-slate-400 hover:text-white hover:border-slate-400 disabled:opacity-40"
+              title="Undo this close and return the thread to ACTIVE"
+            >
+              {reopening === t.id ? '…' : 'Reopen'}
+            </button>
           </div>
         );
       })}
