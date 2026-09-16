@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { getPostBySlug } from '@/lib/mcp';
-import { isRetiredPostStatus } from '@/lib/types';
+import { isPubliclyViewable } from '@/lib/types';
 import { ogCardFor, OG_SITE_NAME } from '@/lib/og-card';
 
 // Every link shared before this rendered as a bare `summary` card with no image.
@@ -14,9 +14,10 @@ export const contentType = 'image/png';
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const post = await getPostBySlug(slug);
-  // Same gate as the page: a post the MD rejected or a later post superseded
-  // must not be shareable as a card either.
-  if (!post || isRetiredPostStatus(post.status)) {
+  // Same gate as the page, and it has to stay the same one: a card is a second
+  // public surface on the same row, and an unapproved post that 404s as a page
+  // while rendering as a shareable PNG has not been withheld from anybody.
+  if (!post || !isPubliclyViewable(post.status)) {
     return new Response('Not found', { status: 404 });
   }
 

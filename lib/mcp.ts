@@ -447,6 +447,22 @@ export async function closeThread(input: {
   return callMCPTool<{ entity: InjuryEntity }>('web_thread_close', { ...input });
 }
 
+/**
+ * Undo a close. The only way back from RESOLVED or RETIRED — mcp had no path
+ * that set status to ACTIVE at all until the return detector made a machine
+ * capable of closing the wrong thread. Clears actual_return_date,
+ * return_source, returned_at, closed_at and accuracy_record; refuses VOID.
+ */
+export async function reopenThread(input: {
+  entity_id: string;
+  reopened_by: string;
+  reason: string;
+}): Promise<{ entity: InjuryEntity; previous_status: string }> {
+  return callMCPTool<{ entity: InjuryEntity; previous_status: string }>('web_thread_reopen', {
+    ...input,
+  });
+}
+
 // ── Baseline metrics (monetization plan Phase 0.3, mcp migration 024) ────────
 // Follower counts are written by the agents' daily snapshot loop; the frontend
 // only reads them, records the monthly web numbers typed in from the Vercel

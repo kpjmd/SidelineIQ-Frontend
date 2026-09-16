@@ -20,17 +20,39 @@ export type MdReviewStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUPERSEDED';
  * Keeping the row created one regression it is worth being explicit about: a
  * rejected post used to 404 on the public site only because it no longer
  * existed. Now it exists, and /post/[slug] would happily render clinical
- * content the MD binned. isRetiredPostStatus is what stops that.
+ * content the MD binned.
+ *
+ * The public surfaces gate on `isPubliclyViewable` below, which is stricter
+ * than this and covers the same ground. This set still names the distinction
+ * the DATA makes — "retired" is a different thing from "not yet approved", and
+ * the retirement queries in the agents repo turn on it.
  */
 export const RETIRED_POST_STATUSES: readonly PostStatus[] = ['REJECTED', 'SUPERSEDED'];
 
 /**
- * Named for the RETIRED set, not for "publicly visible", on purpose. The review
- * queue links the MD to /post/[slug] for a PENDING_REVIEW item, so that status
- * must keep rendering — and naming this helper the other way round would make
- * every caller and every test assert something about PENDING_REVIEW that nobody
- * has decided.
+ * Named for the RETIRED set, not for "publicly visible". That question is now
+ * answered by `isPubliclyViewable`, which is the one the public surfaces ask;
+ * this predicate answers the narrower data question — did this row reach an
+ * audience and then get withdrawn, as opposed to never having been approved.
  */
+/**
+ * May this post be served to the public?
+ *
+ * PUBLISHED only. The three public surfaces — the page, its metadata, and the
+ * OG/Twitter card — used to gate on `isRetiredPostStatus`, which blocks REJECTED
+ * and SUPERSEDED and lets PENDING_REVIEW and DRAFT through. That left clinical
+ * content **waiting for a physician's approval** fetchable, and shareable as a
+ * rendered card, by anyone who knew or guessed the slug: the one state where we
+ * have explicitly not yet decided the content is fit to publish.
+ *
+ * The reason it was open is that the review queue linked the MD to /post/<slug>
+ * to read a queued item. That now goes to /admin/preview/<slug>, behind the
+ * session, so the public gate can be the honest one.
+ */
+export function isPubliclyViewable(status: PostStatus): boolean {
+  return status === 'PUBLISHED';
+}
+
 export function isRetiredPostStatus(status: string | null | undefined): boolean {
   return status === 'REJECTED' || status === 'SUPERSEDED';
 }
@@ -204,6 +226,11 @@ export interface OtmProjection {
   created_at?: string;
 }
 
+export type UnscoreableReason =
+  | 'no_projection'
+  | 'no_injury_date'
+  | 'no_actual_return_date';
+
 export interface AccuracyRecord {
   projected_return_date: string | null;
   actual_return_date: string | null;
@@ -211,6 +238,13 @@ export interface AccuracyRecord {
   within_range: boolean | null;
   otm_min_weeks: number | null;
   otm_max_weeks: number | null;
+  /**
+   * Whether this record can be counted at all (mcp, 2026-09-15). ABSENT on
+   * every row written before that: treat `undefined` as "derive it" — the
+   * historical equivalent is `within_range != null` — and never as `false`.
+   */
+  scoreable?: boolean;
+  unscoreable_reason?: UnscoreableReason;
 }
 
 // Shape returned by web_get_entity / web_thread_get.

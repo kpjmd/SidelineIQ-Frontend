@@ -244,8 +244,10 @@ export function ReviewQueue({ initialReviews }: Props) {
                   <p className="text-sm text-slate-400">{review.reason}</p>
 
                   {review.slug && (
+                    // /post/[slug] serves PUBLISHED only, so a queued item
+                    // reads through the session-gated preview instead.
                     <Link
-                      href={`/post/${review.slug}`}
+                      href={`/admin/preview/${review.slug}`}
                       target="_blank"
                       className="inline-block text-xs text-blue-400 hover:text-blue-300 mt-1"
                     >
