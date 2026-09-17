@@ -52,8 +52,12 @@ export function computeAccuracyStats(threads: ThreadListItem[]): AccuracyStats {
   for (const t of threads) {
     const rec = t.accuracy_record;
     const verdict = rec?.within_range;
+    // `scoreable: false` outranks a verdict. mcp never writes both, but the
+    // record's own statement that it cannot be counted is the one to believe —
+    // and `undefined` (pre-2026-09-15) still means "derive it from the verdict".
+    const counted = rec?.scoreable !== false && (verdict === true || verdict === false);
 
-    if (verdict === true || verdict === false) {
+    if (counted) {
       withinDenominator++;
       if (verdict) withinCount++;
     } else {
@@ -66,7 +70,7 @@ export function computeAccuracyStats(threads: ThreadListItem[]): AccuracyStats {
     }
 
     const err = rec?.error_days;
-    if (typeof err === 'number' && Number.isFinite(err)) {
+    if (rec?.scoreable !== false && typeof err === 'number' && Number.isFinite(err)) {
       errorSum += Math.abs(err);
       maeCount++;
     }

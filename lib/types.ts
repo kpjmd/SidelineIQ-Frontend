@@ -229,7 +229,11 @@ export interface OtmProjection {
 export type UnscoreableReason =
   | 'no_projection'
   | 'no_injury_date'
-  | 'no_actual_return_date';
+  | 'no_actual_return_date'
+  // Pre-registration Amendment 1 (A1.3): the return was the team's first game
+  // after the injury and on or after the window floor — the calendar, not the
+  // recovery, chose the date.
+  | 'calendar_censored';
 
 export interface AccuracyRecord {
   projected_return_date: string | null;
@@ -245,6 +249,13 @@ export interface AccuracyRecord {
    */
   scoreable?: boolean;
   unscoreable_reason?: UnscoreableReason;
+  /**
+   * Amendment 1 (2026-09-16). The PUBLISHED post whose window was scored, and
+   * whether the return was the team's first game after the injury (null = the
+   * closer could not say). Both ABSENT on older rows.
+   */
+  scored_post_id?: string | null;
+  censored?: boolean | null;
 }
 
 // Shape returned by web_get_entity / web_thread_get.

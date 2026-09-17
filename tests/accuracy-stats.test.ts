@@ -108,3 +108,40 @@ describe('unscoreable reasons', () => {
     expect(s.unscoreableReasons).toEqual({});
   });
 });
+
+describe('Amendment 1 — calendar censoring', () => {
+  it('excludes a calendar_censored record from both numbers and names the reason', () => {
+    const stats = computeAccuracyStats([
+      thread('in', 'RESOLVED', { within_range: true, error_days: 3, scoreable: true }),
+      thread('censored', 'RESOLVED', {
+        within_range: null,
+        error_days: null,
+        scoreable: false,
+        unscoreable_reason: 'calendar_censored',
+        censored: true,
+      }),
+      // A censored return before the window floor is still a scored miss.
+      thread('early-miss', 'RESOLVED', { within_range: false, error_days: -30, scoreable: true, censored: true }),
+    ]);
+    expect(stats.withinCount).toBe(1);
+    expect(stats.withinDenominator).toBe(2);
+    expect(stats.maeCount).toBe(2);
+    expect(stats.unscoreableReasons).toEqual({ calendar_censored: 1 });
+  });
+
+  it('believes scoreable:false over a verdict, and still derives a legacy row', () => {
+    const stats = computeAccuracyStats([
+      thread('contradictory', 'RESOLVED', {
+        within_range: false,
+        error_days: 12,
+        scoreable: false,
+        unscoreable_reason: 'calendar_censored',
+      }),
+      thread('legacy', 'RESOLVED', { within_range: true, error_days: 2 }),
+    ]);
+    expect(stats.withinDenominator).toBe(1);
+    expect(stats.withinCount).toBe(1);
+    expect(stats.maeCount).toBe(1);
+    expect(stats.mae).toBe(2);
+  });
+});
