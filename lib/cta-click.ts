@@ -14,6 +14,8 @@
 // Nothing about the visitor is stored. The mcp side keeps an aggregate counter
 // (day, post, link) and only for a PUBLISHED post (mcp migration 024).
 
+import { BRAND_SLUG } from './brand';
+
 export const CTA_LINKS = ['cta', 'byline'] as const;
 export type CtaLink = (typeof CTA_LINKS)[number];
 
@@ -29,8 +31,8 @@ const NON_HUMAN_UA_RE =
 /** Where the reader lands. `ref` is kept so the attribution the site has always sent survives. */
 export function aequosTarget(from: CtaLink | null): string {
   const url = new URL(AEQUOS_ORIGIN);
-  url.searchParams.set('ref', 'sidelineiq');
-  url.searchParams.set('utm_source', 'sidelineiq');
+  url.searchParams.set('ref', BRAND_SLUG);
+  url.searchParams.set('utm_source', BRAND_SLUG);
   url.searchParams.set('utm_medium', 'web');
   url.searchParams.set('utm_campaign', 'deep_dive');
   url.searchParams.set('utm_content', from ?? 'unknown');

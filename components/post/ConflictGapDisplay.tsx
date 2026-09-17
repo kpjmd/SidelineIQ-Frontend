@@ -1,5 +1,6 @@
 import type { InjuryPost } from '@/lib/types';
 import { describePostConflictGap } from '@/lib/conflict-gap-display';
+import { BRAND_NAME } from '@/lib/brand';
 
 type Props = Pick<
   InjuryPost,
@@ -43,7 +44,7 @@ export function ConflictGapDisplay({
     <div className="my-6 border border-rose-700 rounded-lg overflow-hidden">
       <div className="bg-rose-950/50 px-4 py-3 border-b border-rose-800/50">
         <h3 className="text-rose-400 font-bold text-sm tracking-wide">
-          🚩 OTM — Off The Mark
+          🚩 Off The Mark
         </h3>
       </div>
 
@@ -57,7 +58,7 @@ export function ConflictGapDisplay({
           </span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-slate-400">OTM clinical estimate</span>
+          <span className="text-slate-400">{BRAND_NAME} clinical estimate</span>
           <span className="text-rose-400 font-medium">{otmEstimate} from injury</span>
         </div>
         {anchored && (

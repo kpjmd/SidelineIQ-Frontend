@@ -4,6 +4,7 @@ import { listPosts } from '@/lib/mcp';
 import type { ContentType, Sport } from '@/lib/types';
 import { FilterBar } from '@/components/feed/FilterBar';
 import { PostFeed } from '@/components/feed/PostFeed';
+import { BRAND_NAME, BRAND_TAGLINE, rebrandPost } from '@/lib/brand';
 
 export const revalidate = 60;
 
@@ -31,9 +32,9 @@ export default async function FeedPage({ searchParams }: PageProps) {
       <header className="border-b border-slate-800 bg-slate-950/90 backdrop-blur sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-black text-white tracking-tight">SidelineIQ</span>
+            <span className="text-xl font-black text-white tracking-tight">{BRAND_NAME}</span>
             <span className="hidden sm:inline text-xs text-slate-500 font-medium mt-0.5">
-              Clinical Sports Intelligence
+              {BRAND_TAGLINE}
             </span>
           </Link>
           <Link
@@ -50,7 +51,7 @@ export default async function FeedPage({ searchParams }: PageProps) {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-white mb-1">Injury Intelligence Feed</h1>
           <p className="text-sm text-slate-500">
-            Clinical breakdowns, return-to-play timelines, and conflict detection — powered by OrthoTriage Master.
+            Clinical breakdowns, return-to-play timelines, and conflict detection — physician-founded.
           </p>
         </div>
 
@@ -61,7 +62,7 @@ export default async function FeedPage({ searchParams }: PageProps) {
         </div>
 
         <PostFeed
-          posts={result.posts}
+          posts={result.posts.map(rebrandPost)}
           hasMore={result.has_more}
           total={result.total}
           limit={limit}
@@ -72,7 +73,7 @@ export default async function FeedPage({ searchParams }: PageProps) {
       <footer className="border-t border-slate-800 mt-16">
         <div className="max-w-3xl mx-auto px-4 py-6 text-center">
           <p className="text-xs text-slate-600">
-            SidelineIQ · Clinical intelligence for the sports world · Not medical advice ·{' '}
+            {BRAND_NAME} · Clinical intelligence for the sports world · Not medical advice ·{' '}
             <Link href="/privacy" className="hover:text-slate-400 transition-colors">
               Privacy
             </Link>

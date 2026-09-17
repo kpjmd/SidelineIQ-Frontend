@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
+import { BRAND_NAME } from '@/lib/brand';
 
 // Single physician sign-in. Magic-link only — no password, no shared secret.
 // Gates BOTH the MD Review dashboard (/admin) and the Injury Desk (/desk); only
@@ -39,7 +40,7 @@ function SignInCard() {
     <div className="min-h-screen bg-slate-950 flex items-center justify-center">
       <div className="w-full max-w-sm p-8 bg-slate-900 border border-slate-700 rounded-xl">
         <Link href="/" className="text-lg font-black text-white tracking-tight">
-          SidelineIQ
+          {BRAND_NAME}
         </Link>
         <p className="text-sm text-slate-500 mt-1 mb-6">
           Physician sign-in. We&apos;ll email you a secure sign-in link.

@@ -23,8 +23,8 @@ describe('the redirect target', () => {
     const url = new URL(aequosTarget('cta'));
     expect(url.origin).toBe('https://aequos.io');
     expect(Object.fromEntries(url.searchParams)).toEqual({
-      ref: 'sidelineiq',
-      utm_source: 'sidelineiq',
+      ref: 'paratros',
+      utm_source: 'paratros',
       utm_medium: 'web',
       utm_campaign: 'deep_dive',
       utm_content: 'cta',

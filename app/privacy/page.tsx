@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { BRAND_NAME } from '@/lib/brand';
 
 // Static. Every sentence here must stay true of the code: if what the site
 // collects changes (analytics, the /go/aequos click counter, sign-in), change
 // this page in the same PR. Physician-branded and medical-adjacent, so it says
 // what is NOT collected as plainly as what is.
 export const metadata: Metadata = {
-  title: 'Privacy — SidelineIQ',
-  description: 'What SidelineIQ collects about visitors, and what it does not.',
+  title: `Privacy — ${BRAND_NAME}`,
+  description: `What ${BRAND_NAME} collects about visitors, and what it does not.`,
 };
 
 const LAST_UPDATED = 'September 13, 2026';
@@ -18,7 +19,7 @@ export default function PrivacyPage() {
       <header className="border-b border-slate-800">
         <div className="max-w-3xl mx-auto px-4 py-4">
           <Link href="/" className="text-xl font-black text-white tracking-tight">
-            SidelineIQ
+            {BRAND_NAME}
           </Link>
         </div>
       </header>
@@ -32,7 +33,7 @@ export default function PrivacyPage() {
         <section className="space-y-2">
           <h2 className="text-base font-semibold text-white">The short version</h2>
           <p>
-            Reading SidelineIQ does not require an account. We do not use advertising or tracking
+            Reading {BRAND_NAME} does not require an account. We do not use advertising or tracking
             cookies, we do not sell or share data about visitors, and we never ask for or store
             anything about your own health.
           </p>
@@ -83,7 +84,7 @@ export default function PrivacyPage() {
         <section className="space-y-2">
           <h2 className="text-base font-semibold text-white">Not medical advice</h2>
           <p>
-            SidelineIQ analyzes publicly reported sports injuries for general education. It is not
+            {BRAND_NAME} analyzes publicly reported sports injuries for general education. It is not
             medical advice and does not create a doctor–patient relationship. If you have an injury
             or health concern, see a qualified clinician.
           </p>

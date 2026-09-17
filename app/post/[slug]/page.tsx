@@ -5,6 +5,7 @@ import { getPostBySlug, listMdReviews } from '@/lib/mcp';
 import { isPubliclyViewable } from '@/lib/types';
 import { DeepDivePost } from '@/components/post/DeepDivePost';
 import { siteUrl as resolveSite } from '@/lib/site-url';
+import { BRAND_NAME, rebrandPost } from '@/lib/brand';
 
 export const revalidate = 60;
 
@@ -14,12 +15,13 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPostBySlug(slug);
+  const raw = await getPostBySlug(slug);
+  const post = raw ? rebrandPost(raw) : null;
   // Metadata leaks as much as the page: a title, a description and a canonical
   // URL for an unapproved post is the post, in every preview that matters.
-  if (!post || !isPubliclyViewable(post.status)) return { title: 'Not Found | SidelineIQ' };
+  if (!post || !isPubliclyViewable(post.status)) return { title: `Not Found | ${BRAND_NAME}` };
 
-  const title = `${post.athlete_name} ${post.injury_type} Injury Update | SidelineIQ`;
+  const title = `${post.athlete_name} ${post.injury_type} Injury Update | ${BRAND_NAME}`;
   const description = post.clinical_summary
     .replace(/\[([A-Z][A-Z\s/]+):[^\]]*\]/g, '')
     .replace(/[#*_`]/g, '')
@@ -39,7 +41,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       type: 'article',
       publishedTime: post.created_at,
       modifiedTime: post.updated_at,
-      siteName: 'SidelineIQ',
+      siteName: BRAND_NAME,
     },
     twitter: {
       card: 'summary_large_image',
@@ -52,12 +54,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function PostPage({ params }: PageProps) {
   const { slug } = await params;
 
-  const [post, allReviews] = await Promise.all([
+  const [raw, allReviews] = await Promise.all([
     getPostBySlug(slug),
     listMdReviews('APPROVED'),
   ]);
 
-  if (!post) notFound();
+  if (!raw) notFound();
+  // Stored prose from before the rename names the retired persona.
+  const post = rebrandPost(raw);
 
   // PUBLISHED only. This used to block the RETIRED set alone, which let a
   // PENDING_REVIEW post — clinical content sitting in the physician's queue
@@ -77,11 +81,11 @@ export default async function PostPage({ params }: PageProps) {
     dateModified: approvedReview?.reviewed_at ?? post.updated_at,
     author: {
       '@type': 'Organization',
-      name: 'OrthoTriage Master / SidelineIQ',
+      name: BRAND_NAME,
     },
     publisher: {
       '@type': 'Organization',
-      name: 'SidelineIQ',
+      name: BRAND_NAME,
     },
     url: `${siteUrl}/post/${slug}`,
   };
@@ -92,7 +96,7 @@ export default async function PostPage({ params }: PageProps) {
       <header className="border-b border-slate-800 bg-slate-950/90 backdrop-blur sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-black text-white tracking-tight">SidelineIQ</span>
+            <span className="text-xl font-black text-white tracking-tight">{BRAND_NAME}</span>
             <span className="hidden sm:inline text-xs text-slate-500 font-medium mt-0.5">
               Clinical Sports Intelligence
             </span>
@@ -119,7 +123,7 @@ export default async function PostPage({ params }: PageProps) {
       <footer className="border-t border-slate-800 mt-8">
         <div className="max-w-3xl mx-auto px-4 py-6 text-center">
           <p className="text-xs text-slate-600">
-            SidelineIQ · Clinical intelligence for the sports world · Not medical advice ·{' '}
+            {BRAND_NAME} · Clinical intelligence for the sports world · Not medical advice ·{' '}
             <Link href="/privacy" className="hover:text-slate-400 transition-colors">
               Privacy
             </Link>

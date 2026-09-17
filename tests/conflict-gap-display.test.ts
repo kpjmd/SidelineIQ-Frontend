@@ -29,7 +29,7 @@ describe('describePostConflictGap', () => {
     // Pre-fix: 39 - 1 = "+38 weeks — conflict threshold met" for an athlete
     // whose team-implied return is 50 weeks, inside a 39-52 window.
     const d = describePostConflictGap(post());
-    expect(d.label).toContain('inside the OTM window');
+    expect(d.label).toContain('inside the ParatrOs window');
     expect(d.tone).toBe('info');
     expect(d.gap.team_total_weeks).toBe(50);
   });
@@ -44,7 +44,7 @@ describe('describePostConflictGap', () => {
 
   it('names the distance and the direction when the timelines really diverge', () => {
     const d = describePostConflictGap(post({ team_timeline_weeks: 33, injury_date: '2026-01-11' }));
-    expect(d.label).toBe('14 weeks beyond the OTM window — conflict threshold met');
+    expect(d.label).toBe('14 weeks beyond the ParatrOs window — conflict threshold met');
     expect(d.badge).toBe('Δ+14w');
     expect(d.tone).toBe('conflict');
   });
@@ -81,7 +81,7 @@ describe('describeConflictGap — tone and threshold', () => {
   // implied total is team + 8 against a 10-20 window.
   it('is muted, not alarming, when the divergence is within tolerance', () => {
     const d = describeConflictGap(gap(14, 10, 20, '2026-07-08'));
-    expect(d.label).toBe('2 weeks beyond the OTM window');
+    expect(d.label).toBe('2 weeks beyond the ParatrOs window');
     expect(d.tone).toBe('info');
   });
 

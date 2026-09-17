@@ -4,6 +4,7 @@ import type { InjuryPost } from '@/lib/types';
 import { SportBadge } from '@/components/shared/SportBadge';
 import { OTMSignature } from '@/components/shared/OTMSignature';
 import { describePostConflictGap } from '@/lib/conflict-gap-display';
+import { BRAND_NAME } from '@/lib/brand';
 
 export function ConflictFlagCard({ post }: { post: InjuryPost }) {
   const slug = post.slug ?? post.id;
@@ -24,7 +25,7 @@ export function ConflictFlagCard({ post }: { post: InjuryPost }) {
       <Link href={`/post/${slug}`} className="block p-5">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-rose-400 font-black text-sm tracking-wide">
-            🚩 OTM CONFLICT FLAG
+            🚩 CONFLICT FLAG
           </span>
           <SportBadge sport={post.sport} />
           <time className="ml-auto text-xs text-slate-500">
@@ -46,7 +47,7 @@ export function ConflictFlagCard({ post }: { post: InjuryPost }) {
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-400">OTM estimate</span>
+            <span className="text-slate-400">{BRAND_NAME} estimate</span>
             <span className="text-rose-400 font-medium">{otmEstimate}</span>
           </div>
           {/* Shown for every status, not only above threshold: a card that

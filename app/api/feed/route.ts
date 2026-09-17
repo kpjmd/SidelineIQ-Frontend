@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listPosts } from '@/lib/mcp';
 import type { ContentType, Sport } from '@/lib/types';
+import { rebrandPost } from '@/lib/brand';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
       limit: Math.min(limit, 50),
       offset,
     });
-    return NextResponse.json(result);
+    return NextResponse.json({ ...result, posts: result.posts.map(rebrandPost) });
   } catch (err) {
     console.error('feed route error:', err);
     return NextResponse.json({ error: 'Failed to fetch posts' }, { status: 500 });
