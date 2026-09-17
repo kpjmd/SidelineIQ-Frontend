@@ -185,6 +185,13 @@ needed hand-written SQL against production with no audit row.
 `WEB_MCP_URL`, `MCP_AUTH_SECRET`, `AGENTS_URL`, `AGENTS_API_SECRET`,
 `AUTH_SECRET`, `AUTH_URL`, `ALLOWED_MD_EMAIL`, `AUTH_RESEND_KEY`, `EMAIL_FROM`,
 `NEXT_PUBLIC_SITE_URL` (must include the scheme). See `.env.example`.
+
+**Domain.** The canonical origin is `https://www.paratros.com` (Vercel 308s the
+apex to www). `sidelineiq.vercel.app` stays attached and 308s every path to the
+same path on www — `lib/legacy-host-redirect.ts`, wired in `next.config.ts` —
+because every post published before 2026-09-17 links there. The redirect's
+destination is the `DEFAULT_SITE_URL` constant, never the env var, so a stale
+env value cannot make it loop. `AUTH_URL` must be the new origin too.
 `RAILWAY_BACKEND_URL` and `ADMIN_SECRET` are gone; if you find a reference,
 it is stale.
 

@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
+import { legacyHostRedirects } from "./lib/legacy-host-redirect";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async redirects() {
+    return legacyHostRedirects;
+  },
 };
 
 export default nextConfig;

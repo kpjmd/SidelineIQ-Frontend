@@ -11,9 +11,18 @@
  * host — and a throw there fails the build, not one request.
  *
  * The fallback is the host production actually serves (and the agents' own
- * SITE_URL default), not sidelineiq.com: we do not own that domain.
+ * SITE_URL default). Since the ParatrOs domain cutover (2026-09-17) that is
+ * www.paratros.com — Vercel 308s the apex to www, so www is canonical. Never
+ * sidelineiq.com: we do not own that domain.
  */
-export const DEFAULT_SITE_URL = 'https://sidelineiq.vercel.app';
+export const DEFAULT_SITE_URL = 'https://www.paratros.com';
+
+/**
+ * The host every post published before the cutover links to. It stays attached
+ * to the project and 308s to DEFAULT_SITE_URL (next.config.ts), so those links
+ * keep resolving.
+ */
+export const LEGACY_SITE_HOST = 'sidelineiq.vercel.app';
 
 export function resolveSiteUrl(raw: string | undefined | null): string {
   const trimmed = (raw ?? '').trim();
