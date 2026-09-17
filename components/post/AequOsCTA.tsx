@@ -1,4 +1,5 @@
 import { aequosClickHref } from '@/lib/cta-click';
+import { BRAND_NAME } from '@/lib/brand';
 
 // Links through /go/aequos so the click is counted (aggregate only) before the
 // reader lands on aequos.io. A plain <a>, never next/link: a prefetch must not
@@ -13,7 +14,7 @@ export function AequOsCTA({ slug }: { slug: string | null }) {
         <p className="text-slate-500 text-sm max-w-md mx-auto leading-relaxed">
           AequOs brings the same clinical intelligence to your situation.
           Consult with AI trained on orthopedic expertise — built by the
-          same physician behind SidelineIQ.
+          same physician behind {BRAND_NAME}.
         </p>
         <a
           href={aequosClickHref(slug, 'cta')}

@@ -11,8 +11,9 @@
  * fetches emoji glyphs from a CDN at render time.
  */
 import type { ContentType, InjuryPost, Sport } from './types';
+import { BRAND_NAME } from './brand';
 
-export const OG_SITE_NAME = 'SidelineIQ';
+export const OG_SITE_NAME = BRAND_NAME;
 export const OG_TAGLINE = 'Clinical sports injury intelligence';
 export const OG_HEADLINE_MAX = 110;
 

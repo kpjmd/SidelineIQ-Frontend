@@ -10,6 +10,7 @@ import { PostBrowser } from '@/components/admin/PostBrowser';
 import { CandidatesQueue } from '@/components/admin/CandidatesQueue';
 import { ThreadsQueue } from '@/components/admin/ThreadsQueue';
 import { MetricsView } from '@/components/admin/MetricsView';
+import { BRAND_NAME } from '@/lib/brand';
 
 type Tab = 'reviews' | 'promote' | 'candidates' | 'threads' | 'metrics';
 
@@ -79,7 +80,7 @@ export function AdminDashboard({
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/" className="text-xl font-black text-white tracking-tight">
-              SidelineIQ
+              {BRAND_NAME}
             </Link>
             <span className="text-slate-700">·</span>
             <span className="text-sm text-amber-500 font-medium">MD Review</span>

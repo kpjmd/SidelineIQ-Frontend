@@ -187,7 +187,7 @@ export function MetaEditor({ meta, locked, onChange }: Props) {
                 value={cf?.otm_range ?? ''}
                 onChange={(e) => setConflict({ otm_range: e.target.value })}
                 disabled={locked}
-                placeholder="OrthoTriage estimate"
+                placeholder="ParatrOs estimate"
                 className={inputCls}
               />
             </div>

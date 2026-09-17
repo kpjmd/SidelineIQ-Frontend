@@ -29,7 +29,7 @@ export async function GET(
       return NextResponse.json(
         {
           error:
-            'No handoff JSON yet. It is assembled when the post is published — publish it on SidelineIQ first.',
+            'No handoff JSON yet. It is assembled when the post is published — publish it on ParatrOs first.',
         },
         { status: 409 },
       );

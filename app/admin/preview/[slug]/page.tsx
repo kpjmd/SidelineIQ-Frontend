@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { auth } from '@/auth';
 import { getPostBySlug, listMdReviews } from '@/lib/mcp';
 import { DeepDivePost } from '@/components/post/DeepDivePost';
+import { BRAND_NAME } from '@/lib/brand';
 
 /**
  * The MD's read of a post that is not public.
@@ -30,7 +31,7 @@ export const dynamic = 'force-dynamic';
 // /admin/:path*) and gated below, but a preview URL that leaks into a referrer
 // header should still never be indexed.
 export const metadata: Metadata = {
-  title: 'Post preview | SidelineIQ admin',
+  title: `Post preview | ${BRAND_NAME} admin`,
   robots: { index: false, follow: false, nocache: true },
 };
 

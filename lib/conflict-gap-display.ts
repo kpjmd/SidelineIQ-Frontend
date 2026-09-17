@@ -8,6 +8,7 @@
  * "conflict threshold met" in the feed.
  */
 import { computeConflictGap, isConflict, type ConflictGap } from './conflict-gap';
+import { BRAND_NAME } from './brand';
 
 export type ConflictGapTone = 'conflict' | 'info' | 'muted';
 
@@ -43,7 +44,7 @@ export function describeConflictGap(gap: ConflictGap): ConflictGapDescription {
   }
   if (gap.status === 'inside') {
     return {
-      label: 'Team timeline sits inside the OTM window',
+      label: `Team timeline sits inside the ${BRAND_NAME} window`,
       badge: 'Δ0w',
       tone: 'info',
       unavailableReason: null,
@@ -54,7 +55,7 @@ export function describeConflictGap(gap: ConflictGap): ConflictGapDescription {
   const direction = gap.status === 'shorter' ? 'short of' : 'beyond';
   const conflict = isConflict(gap);
   return {
-    label: `${magnitude} ${magnitude === 1 ? 'week' : 'weeks'} ${direction} the OTM window${
+    label: `${magnitude} ${magnitude === 1 ? 'week' : 'weeks'} ${direction} the ${BRAND_NAME} window${
       conflict ? ' — conflict threshold met' : ''
     }`,
     badge: `Δ${gap.gap_weeks > 0 ? '+' : ''}${gap.gap_weeks}w`,

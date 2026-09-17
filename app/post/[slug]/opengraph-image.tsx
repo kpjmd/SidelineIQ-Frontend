@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og';
 import { getPostBySlug } from '@/lib/mcp';
 import { isPubliclyViewable } from '@/lib/types';
 import { ogCardFor, OG_SITE_NAME } from '@/lib/og-card';
+import { rebrandPost } from '@/lib/brand';
 
 // Every link shared before this rendered as a bare `summary` card with no image.
 // Text only, by design — see lib/og-card.ts for why no clinical figures appear.
@@ -21,7 +22,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
     return new Response('Not found', { status: 404 });
   }
 
-  const card = ogCardFor(post);
+  const card = ogCardFor(rebrandPost(post));
 
   return new ImageResponse(
     (

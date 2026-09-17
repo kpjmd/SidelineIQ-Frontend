@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { DeskPost, KpjmdLiveResult } from '@/lib/types';
+import { BRAND_NAME } from '@/lib/brand';
 
 interface Props {
   post: DeskPost;
@@ -84,7 +85,7 @@ export function HandoffPanel({ post, onConfirmed }: Props) {
       <div className="space-y-2 text-xs">
         <Step
           done
-          label={retracted ? 'Retracted on SidelineIQ' : 'Published on SidelineIQ'}
+          label={retracted ? `Retracted on ${BRAND_NAME}` : `Published on ${BRAND_NAME}`}
           detail={
             retracted
               ? undefined
