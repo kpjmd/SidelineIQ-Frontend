@@ -367,9 +367,10 @@ function ThreadCard({
 }
 
 const UNSCOREABLE_LABEL: Record<string, string> = {
-  no_projection: 'no OTM window',
+  no_projection: 'no published OTM window',
   no_injury_date: 'no injury date',
   no_actual_return_date: 'no return recorded',
+  calendar_censored: 'first game available (censored)',
 };
 
 function AccuracyView({
@@ -453,7 +454,7 @@ function AccuracyView({
           <p className="ml-auto text-xs text-slate-500 text-right">
             {excludedTotal} excluded
             <br />
-            {excluded.retired} retired · {excluded.noRecord} no record
+            {excluded.retired} retired · {excluded.noRecord} not scored
             {reasonSummary && (
               <>
                 <br />
@@ -497,6 +498,8 @@ function AccuracyView({
                 {rec?.scoreable === false && rec.unscoreable_reason
                   ? ` · ${UNSCOREABLE_LABEL[rec.unscoreable_reason] ?? rec.unscoreable_reason}`
                   : ''}
+                {/* A censored return that still counts is a provable early miss. */}
+                {rec?.censored === true && rec.scoreable !== false ? ' · first game available' : ''}
               </p>
             </div>
             {/* VOID is not reopenable and never reaches this view (it lists
