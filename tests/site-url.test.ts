@@ -8,8 +8,9 @@ import { describe, it, expect } from 'vitest';
 import { resolveSiteUrl, DEFAULT_SITE_URL } from '../lib/site-url';
 
 describe('resolveSiteUrl', () => {
-  it('adds https to the bare host production actually sets', () => {
+  it('adds https to a bare host', () => {
     expect(resolveSiteUrl('sidelineiq.vercel.app')).toBe('https://sidelineiq.vercel.app');
+    expect(resolveSiteUrl('www.paratros.com')).toBe('https://www.paratros.com');
   });
 
   it('keeps an explicit scheme and drops a trailing slash', () => {
@@ -26,6 +27,8 @@ describe('resolveSiteUrl', () => {
       expect(resolveSiteUrl(raw)).toBe(DEFAULT_SITE_URL);
     }
     expect(DEFAULT_SITE_URL).not.toContain('sidelineiq.com');
+    // The canonical host since the ParatrOs cutover; the apex 308s to www.
+    expect(DEFAULT_SITE_URL).toBe('https://www.paratros.com');
   });
 
   it('always yields something new URL() accepts — metadataBase fails the build otherwise', () => {
