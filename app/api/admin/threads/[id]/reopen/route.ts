@@ -3,7 +3,14 @@ import { reopenThread } from '@/lib/mcp';
 import { requireMd } from '@/lib/desk-auth';
 
 /**
- * POST /api/admin/threads/:entityId/reopen — undo a wrong close.
+ * POST /api/admin/threads/:id/reopen — undo a wrong close.
+ *
+ * The slug is `id`, not `entityId`, because it MUST match the sibling
+ * [id]/route.ts: Next rejects two differently-named dynamic segments under one
+ * parent, and the route tree is built at request time, so a mismatch 500s every
+ * path in the app under `next start` / `next dev` — not just this one. Vercel
+ * routes from the prebuilt manifest instead and so never showed it. The value is
+ * an injury_entities id either way.
  *
  * The return detector closes threads on a timer, and until mcp grew
  * web_thread_reopen there was no way back from RESOLVED through any tool in
@@ -17,12 +24,12 @@ import { requireMd } from '@/lib/desk-auth';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ entityId: string }> },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const gate = await requireMd();
   if (!gate.ok) return gate.response;
 
-  const { entityId } = await params;
+  const { id } = await params;
   let body: { reason?: unknown };
   try {
     body = (await request.json()) as { reason?: unknown };
@@ -39,7 +46,7 @@ export async function POST(
 
   try {
     const result = await reopenThread({
-      entity_id: entityId,
+      entity_id: id,
       reopened_by: gate.userId,
       reason,
     });
