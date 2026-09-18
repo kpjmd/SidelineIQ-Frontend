@@ -1,18 +1,30 @@
+/**
+ * The sport badge, deliberately colourless.
+ *
+ * It used to carry its own hue per league (NFL blue / NBA orange / PL purple /
+ * UFC red) — a sixth parallel colour system, and the UFC red collided head-on
+ * with Conflict Red, which the kit reserves. The kit says nothing about league
+ * colours, and the reason is visible once the content-type badge is amber or
+ * red: two saturated chips side by side, and the reader cannot tell which one
+ * means "urgent".
+ *
+ * So: one muted mono pill for every sport. The content-type colour is the only
+ * colour on a card.
+ */
 import type { Sport } from '@/lib/types';
 
-const SPORT_CONFIG: Record<Sport, { label: string; className: string }> = {
-  NFL: { label: 'NFL', className: 'bg-blue-900/60 text-blue-300 border-blue-700' },
-  NBA: { label: 'NBA', className: 'bg-orange-900/60 text-orange-300 border-orange-700' },
-  PREMIER_LEAGUE: { label: 'PL', className: 'bg-purple-900/60 text-purple-300 border-purple-700' },
-  UFC: { label: 'UFC', className: 'bg-red-900/60 text-red-300 border-red-700' },
-  OTHER: { label: 'OTHER', className: 'bg-slate-800 text-slate-400 border-slate-600' },
+const SPORT_LABEL: Record<Sport, string> = {
+  NFL: 'NFL',
+  NBA: 'NBA',
+  PREMIER_LEAGUE: 'PL',
+  UFC: 'UFC',
+  OTHER: 'OTHER',
 };
 
 export function SportBadge({ sport }: { sport: Sport }) {
-  const config = SPORT_CONFIG[sport] ?? SPORT_CONFIG.OTHER;
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold border ${config.className}`}>
-      {config.label}
+    <span className="inline-flex items-center rounded-sm border border-slate-700 bg-inset px-2 py-0.5 font-mono text-xs font-medium tracking-[0.1em] text-slate-400">
+      {SPORT_LABEL[sport] ?? SPORT_LABEL.OTHER}
     </span>
   );
 }

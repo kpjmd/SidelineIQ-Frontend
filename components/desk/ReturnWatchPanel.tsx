@@ -64,7 +64,7 @@ export function ReturnWatchPanel({ deskPostId, initialUpdates, candidateId }: Pr
           value={headline}
           onChange={(e) => setHeadline(e.target.value)}
           placeholder="Headline (e.g. Day 298: first game back)"
-          className="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500"
+          className="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-bone focus:outline-none focus:border-slate-500"
         />
         <textarea
           value={body}
@@ -78,7 +78,7 @@ export function ReturnWatchPanel({ deskPostId, initialUpdates, candidateId }: Pr
             type="date"
             value={occurredAt}
             onChange={(e) => setOccurredAt(e.target.value)}
-            className="bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500"
+            className="bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-bone focus:outline-none focus:border-slate-500"
           />
           <button
             onClick={submit}
@@ -98,7 +98,7 @@ export function ReturnWatchPanel({ deskPostId, initialUpdates, candidateId }: Pr
           {updates.map((u) => (
             <li key={u.id} className="border-l-2 border-emerald-800 pl-3">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-semibold text-white">{u.headline}</span>
+                <span className="text-xs font-semibold text-bone">{u.headline}</span>
                 <time className="text-[11px] text-slate-600 ml-auto">
                   {formatDistanceToNow(new Date(u.occurred_at), { addSuffix: true })}
                 </time>

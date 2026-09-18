@@ -134,7 +134,7 @@ export function PostBrowser() {
             <div className="flex items-center gap-3">
               <SportBadge sport={post.sport} />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white truncate">{post.athlete_name}</p>
+                <p className="text-sm font-semibold text-bone truncate">{post.athlete_name}</p>
                 <p className="text-xs text-slate-500 truncate mt-0.5">{post.headline}</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">

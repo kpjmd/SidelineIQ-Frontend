@@ -38,3 +38,16 @@ export function resolveSiteUrl(raw: string | undefined | null): string {
 }
 
 export const siteUrl = (): string => resolveSiteUrl(process.env.NEXT_PUBLIC_SITE_URL);
+
+/**
+ * The bare host for display — `paratros.com`, not `https://www.paratros.com`.
+ *
+ * Used on the OG cards, where the kit prints the domain as plain text. The `www.`
+ * is stripped because it is a serving detail, not the brand: the canonical origin
+ * is www (the apex 308s to it) but nobody writes it that way. Derived from
+ * siteUrl() so a future origin change cannot leave a stale literal on every
+ * cached card image.
+ */
+export function siteHost(): string {
+  return new URL(siteUrl()).host.replace(/^www\./, '');
+}

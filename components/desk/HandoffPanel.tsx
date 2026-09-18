@@ -117,7 +117,7 @@ export function HandoffPanel({ post, onConfirmed }: Props) {
       <a
         href={href}
         download={filename}
-        className="block w-full text-center bg-slate-100 hover:bg-white text-slate-900 text-sm font-semibold py-2 rounded"
+        className="block w-full text-center bg-bone hover:bg-slate-200 text-ink-on-bone text-sm font-semibold py-2 rounded"
       >
         Download {filename}
       </a>

@@ -31,7 +31,20 @@ describe('ogCardFor', () => {
 
   it('carries nothing but the headline, labels and brand — no clinical figures', () => {
     const card = ogCardFor({ headline: 'H', content_type: 'DEEP_DIVE', sport: 'NFL' });
-    expect(Object.keys(card).sort()).toEqual(['accent', 'eyebrow', 'headline', 'headlineSize', 'siteName', 'tagline']);
+    // Pinned exactly, and that is the point: X and Farcaster cache a card image
+    // independently of the page, so a clinical figure added here would keep
+    // circulating after an MD corrected it. Adding a key must be deliberate.
+    // `ink` joined when the card started drawing the eyebrow as a solid chip —
+    // bone and amber fills need dark text.
+    expect(Object.keys(card).sort()).toEqual([
+      'accent',
+      'eyebrow',
+      'headline',
+      'headlineSize',
+      'ink',
+      'siteName',
+      'tagline',
+    ]);
   });
 });
 

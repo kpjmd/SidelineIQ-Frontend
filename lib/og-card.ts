@@ -11,26 +11,24 @@
  * fetches emoji glyphs from a CDN at render time.
  */
 import type { ContentType, InjuryPost, Sport } from './types';
-import { BRAND_NAME } from './brand';
+import { BRAND_NAME, BRAND_TAGLINE } from './brand';
+import { CONTENT_TYPE_STYLES, NEUTRAL_ACCENT, NEUTRAL_INK } from './brand-visual';
 
 export const OG_SITE_NAME = BRAND_NAME;
-export const OG_TAGLINE = 'Clinical sports injury intelligence';
+/* One tagline, not two. This used to read 'Clinical sports injury intelligence'
+   while lib/brand.ts's BRAND_TAGLINE read 'Clinical Sports Intelligence' — the
+   card and the page disagreed about what the platform is called doing. */
+export const OG_TAGLINE = BRAND_TAGLINE;
 export const OG_HEADLINE_MAX = 110;
 
-const TYPE_LABEL: Record<ContentType, string> = {
-  BREAKING: 'BREAKING',
-  TRACKING: 'TRACKING',
-  DEEP_DIVE: 'DEEP DIVE',
-  CONFLICT_FLAG: 'CONFLICT FLAG',
-};
-
-/** Accent per type, matching ContentTypeBadge's hues. */
-const TYPE_ACCENT: Record<ContentType, string> = {
-  BREAKING: '#f87171',
-  TRACKING: '#fbbf24',
-  DEEP_DIVE: '#60a5fa',
-  CONFLICT_FLAG: '#fb7185',
-};
+/*
+ * Labels and accents come from CONTENT_TYPE_STYLES, which ContentTypeBadge also
+ * reads. They used to be duplicated here as Tailwind v3's *-400 hex values,
+ * frozen at the moment they were copied, while the badges used *-300/*-600
+ * utilities — so the card image and the on-page badge were already different
+ * colours. `label` deliberately carries no ⚑: next/og fetches emoji glyphs from
+ * a CDN at render time.
+ */
 
 const SPORT_LABEL: Record<Sport, string> = {
   NFL: 'NFL',
@@ -43,6 +41,11 @@ const SPORT_LABEL: Record<Sport, string> = {
 export interface OgCard {
   eyebrow: string;
   accent: string;
+  /**
+   * Text colour for a solid `accent` fill. Bone and amber need dark ink; without
+   * this the card would print the eyebrow in the accent on the accent.
+   */
+  ink: string;
   headline: string;
   /** Px. Steps down with length so the longest clamp stays clear of the footer. */
   headlineSize: number;
@@ -69,12 +72,13 @@ export function headlineSizeFor(headline: string): number {
 export function ogCardFor(
   post: Pick<InjuryPost, 'headline' | 'content_type' | 'sport'>,
 ): OgCard {
-  const type = TYPE_LABEL[post.content_type] ?? '';
+  const type = CONTENT_TYPE_STYLES[post.content_type]?.label ?? '';
   const sport = SPORT_LABEL[post.sport] ?? '';
   const headline = clampHeadline(post.headline ?? '');
   return {
     eyebrow: [type, sport].filter(Boolean).join(' · '),
-    accent: TYPE_ACCENT[post.content_type] ?? '#94a3b8',
+    accent: CONTENT_TYPE_STYLES[post.content_type]?.accent ?? NEUTRAL_ACCENT,
+    ink: CONTENT_TYPE_STYLES[post.content_type]?.ink ?? NEUTRAL_INK,
     headline,
     headlineSize: headlineSizeFor(headline),
     siteName: OG_SITE_NAME,

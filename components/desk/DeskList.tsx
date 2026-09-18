@@ -85,7 +85,7 @@ export function DeskList({ initialPosts, acceptedCandidates }: Props) {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-8">
-      <h1 className="text-lg font-semibold text-white">Injury Desk</h1>
+      <h1 className="text-lg font-semibold text-bone">Injury Desk</h1>
 
       <section className="space-y-3">
         <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Ready to draft</h2>
@@ -98,7 +98,7 @@ export function DeskList({ initialPosts, acceptedCandidates }: Props) {
             <div key={c.id} className="bg-slate-900 border border-slate-700 rounded-lg p-4">
               <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">{c.athlete_name ?? 'Unknown athlete'}</p>
+                  <p className="text-sm font-semibold text-bone truncate">{c.athlete_name ?? 'Unknown athlete'}</p>
                   <p className="text-xs text-slate-500 truncate mt-0.5">{injuryDesc(c) || c.headline || '—'}</p>
                 </div>
                 <button
@@ -128,7 +128,7 @@ export function DeskList({ initialPosts, acceptedCandidates }: Props) {
             >
               <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">{c.athlete_name ?? 'Unknown athlete'}</p>
+                  <p className="text-sm font-semibold text-bone truncate">{c.athlete_name ?? 'Unknown athlete'}</p>
                   <p className="text-xs text-slate-500 truncate mt-0.5">{injuryDesc(c) || c.headline || '—'}</p>
                 </div>
                 <span className="px-2 py-0.5 rounded text-xs font-semibold border shrink-0 bg-emerald-900/60 text-emerald-300 border-emerald-700">
@@ -153,7 +153,7 @@ export function DeskList({ initialPosts, acceptedCandidates }: Props) {
             >
               <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">{p.title}</p>
+                  <p className="text-sm font-semibold text-bone truncate">{p.title}</p>
                   <p className="text-xs text-slate-500 truncate mt-0.5">
                     {p.athlete_name ?? 'Unknown'} · {injuryDesc(p) || '—'}
                   </p>

@@ -1,6 +1,7 @@
 import type { InjuryPost } from '@/lib/types';
 import { describePostConflictGap } from '@/lib/conflict-gap-display';
 import { BRAND_NAME } from '@/lib/brand';
+import { BRAND_COLORS } from '@/lib/brand-visual';
 
 type Props = Pick<
   InjuryPost,
@@ -41,17 +42,26 @@ export function ConflictGapDisplay({
   const anchored = gap.elapsed_weeks !== null && gap.team_total_weeks !== null;
 
   return (
-    <div className="my-6 border border-rose-700 rounded-lg overflow-hidden">
-      <div className="bg-rose-950/50 px-4 py-3 border-b border-rose-800/50">
-        <h3 className="text-rose-400 font-bold text-sm tracking-wide">
-          🚩 Off The Mark
+    <div
+      className="my-6 border rounded-lg overflow-hidden"
+      style={{ borderColor: BRAND_COLORS.conflictRed }}
+    >
+      <div
+        className="px-4 py-3 border-b"
+        style={{ backgroundColor: BRAND_COLORS.conflictRed, borderColor: BRAND_COLORS.conflictRed }}
+      >
+        <h3
+          className="font-mono text-sm font-semibold tracking-[0.12em]"
+          style={{ color: BRAND_COLORS.inkOnRed }}
+        >
+          ⚑ Off The Mark
         </h3>
       </div>
 
-      <div className="p-4 bg-rose-950/20 space-y-2">
+      <div className="p-4 bg-inset space-y-2">
         <div className="flex justify-between text-sm">
           <span className="text-slate-400">Team timeline</span>
-          <span className="text-white font-medium">
+          <span className="text-bone font-medium">
             {team_timeline_weeks !== null
               ? `${team_timeline_weeks} weeks remaining, as reported`
               : 'Undisclosed'}
@@ -59,7 +69,9 @@ export function ConflictGapDisplay({
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-slate-400">{BRAND_NAME} clinical estimate</span>
-          <span className="text-rose-400 font-medium">{otmEstimate} from injury</span>
+          <span className="font-medium" style={{ color: BRAND_COLORS.conflictRed }}>
+            {otmEstimate} from injury
+          </span>
         </div>
         {anchored && (
           <>
@@ -73,21 +85,18 @@ export function ConflictGapDisplay({
             </div>
           </>
         )}
-        <div className="flex justify-between text-sm pt-2 border-t border-rose-800/30">
+        <div className="flex justify-between text-sm pt-2 border-t border-slate-700">
           <span className="text-slate-400">Gap</span>
           <span
-            className={
-              tone === 'conflict'
-                ? 'text-rose-300 font-bold text-right'
-                : 'text-slate-300 text-right'
-            }
+            className={tone === 'conflict' ? 'font-bold text-right' : 'text-slate-300 text-right'}
+            style={tone === 'conflict' ? { color: BRAND_COLORS.conflictRed } : undefined}
           >
             {label}
           </span>
         </div>
 
         {conflict_reason && (
-          <p className="text-slate-400 text-sm leading-relaxed pt-2 border-t border-rose-800/30">
+          <p className="text-slate-400 text-sm leading-relaxed pt-2 border-t border-slate-700">
             {conflict_reason}
           </p>
         )}

@@ -10,7 +10,8 @@ import { PostBrowser } from '@/components/admin/PostBrowser';
 import { CandidatesQueue } from '@/components/admin/CandidatesQueue';
 import { ThreadsQueue } from '@/components/admin/ThreadsQueue';
 import { MetricsView } from '@/components/admin/MetricsView';
-import { BRAND_NAME } from '@/lib/brand';
+import { Mark } from '@/components/shared/Mark';
+import { Wordmark } from '@/components/shared/Wordmark';
 
 type Tab = 'reviews' | 'promote' | 'candidates' | 'threads' | 'metrics';
 
@@ -79,11 +80,12 @@ export function AdminDashboard({
       <header className="border-b border-slate-800 bg-slate-950/90 backdrop-blur sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-xl font-black text-white tracking-tight">
-              {BRAND_NAME}
+            <Link href="/" className="inline-flex items-center gap-2">
+              <Mark size={28} />
+              <Wordmark className="text-xl" />
             </Link>
             <span className="text-slate-700">·</span>
-            <span className="text-sm text-amber-500 font-medium">MD Review</span>
+            <span className="font-mono text-xs tracking-[0.14em] text-slate-400">MD REVIEW</span>
           </div>
           <button
             onClick={() => signOut({ callbackUrl: '/signin' })}
@@ -110,7 +112,7 @@ export function AdminDashboard({
               onClick={() => setTab(key)}
               className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
                 tab === key
-                  ? 'border-amber-500 text-white'
+                  ? 'border-amber-500 text-bone'
                   : 'border-transparent text-slate-500 hover:text-slate-300'
               }`}
             >

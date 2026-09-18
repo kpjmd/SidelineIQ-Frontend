@@ -77,7 +77,7 @@ export function CandidatesQueue({ initialCandidates }: Props) {
               {c.sport && <SportBadge sport={c.sport} />}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-white truncate">{c.athlete_name ?? 'Unknown athlete'}</p>
+                  <p className="text-sm font-semibold text-bone truncate">{c.athlete_name ?? 'Unknown athlete'}</p>
                   {c.candidate_kind === 'RETURN_WATCH_UPDATE' && (
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold border shrink-0 bg-emerald-900/60 text-emerald-300 border-emerald-700">
                       Return Watch

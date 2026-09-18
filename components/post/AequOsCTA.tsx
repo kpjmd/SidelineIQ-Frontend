@@ -20,7 +20,7 @@ export function AequOsCTA({ slug }: { slug: string | null }) {
           href={aequosClickHref(slug, 'cta')}
           target="_blank"
           rel="nofollow noopener"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-700 hover:bg-blue-600 text-white text-sm font-medium transition-colors mt-2"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-sm bg-signal-cyan hover:bg-signal-cyan-hover text-ink-on-cyan text-sm font-semibold transition-colors mt-2"
         >
           Get Clinical Guidance →
         </a>

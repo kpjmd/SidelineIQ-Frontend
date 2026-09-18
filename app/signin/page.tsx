@@ -39,7 +39,7 @@ function SignInCard() {
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center">
       <div className="w-full max-w-sm p-8 bg-slate-900 border border-slate-700 rounded-xl">
-        <Link href="/" className="text-lg font-black text-white tracking-tight">
+        <Link href="/" className="text-lg font-black text-bone tracking-tight">
           {BRAND_NAME}
         </Link>
         <p className="text-sm text-slate-500 mt-1 mb-6">
@@ -54,13 +54,13 @@ function SignInCard() {
             placeholder="you@example.com"
             autoFocus
             required
-            className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-600"
+            className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm text-bone placeholder-slate-600 focus:outline-none focus:border-signal-cyan"
           />
           {error && <p className="text-xs text-red-400">{error}</p>}
           <button
             type="submit"
             disabled={submitting || !email}
-            className="w-full py-2 rounded-md bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-medium disabled:opacity-40 transition-colors"
+            className="w-full py-2 rounded-sm bg-signal-cyan hover:bg-signal-cyan-hover text-ink-on-cyan text-sm font-semibold disabled:opacity-40 transition-colors"
           >
             {submitting ? 'Sending link…' : 'Email me a sign-in link'}
           </button>

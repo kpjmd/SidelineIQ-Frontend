@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { BRAND_NAME } from '@/lib/brand';
+import { Mark } from '@/components/shared/Mark';
+import { Wordmark } from '@/components/shared/Wordmark';
 
 // Shown after a magic link is requested (auth.ts pages.verifyRequest).
 export default function CheckEmailPage() {
@@ -7,11 +8,12 @@ export default function CheckEmailPage() {
     <div className="min-h-screen bg-slate-950 flex items-center justify-center">
       <div className="w-full max-w-sm p-8 bg-slate-900 border border-slate-700 rounded-xl text-center">
         <div className="flex items-center justify-center gap-2 mb-3">
-          <span className="text-lg font-black text-white tracking-tight">{BRAND_NAME}</span>
+          <Mark size={22} />
+          <Wordmark className="text-lg" />
           <span className="text-slate-700">·</span>
-          <span className="text-sm text-emerald-400 font-medium">Injury Desk</span>
+          <span className="font-mono text-xs tracking-[0.14em] text-slate-400">INJURY DESK</span>
         </div>
-        <h1 className="text-base font-semibold text-white mb-2">Check your email</h1>
+        <h1 className="text-base font-semibold text-bone mb-2">Check your email</h1>
         <p className="text-sm text-slate-500 mb-6">
           A sign-in link is on its way. Open it on this device to continue to the desk. The
           link is single-use and expires shortly.
