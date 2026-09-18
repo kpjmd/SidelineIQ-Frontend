@@ -62,7 +62,7 @@ export default async function PostPreviewPage({ params }: PageProps) {
               Not public. {post.status === 'PUBLISHED' ? 'This post is live at /post/' + slug + '.' : 'This page is the only way to read it.'}
             </p>
           </div>
-          <Link href="/admin" className="text-xs text-slate-400 hover:text-white whitespace-nowrap">
+          <Link href="/admin" className="text-xs text-slate-400 hover:text-bone whitespace-nowrap">
             ← Dashboard
           </Link>
         </div>

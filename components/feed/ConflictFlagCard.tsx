@@ -5,6 +5,8 @@ import { SportBadge } from '@/components/shared/SportBadge';
 import { OTMSignature } from '@/components/shared/OTMSignature';
 import { describePostConflictGap } from '@/lib/conflict-gap-display';
 import { BRAND_NAME } from '@/lib/brand';
+import { ContentTypeBadge } from '@/components/shared/ContentTypeBadge';
+import { BRAND_COLORS } from '@/lib/brand-visual';
 
 export function ConflictFlagCard({ post }: { post: InjuryPost }) {
   const slug = post.slug ?? post.id;
@@ -21,26 +23,30 @@ export function ConflictFlagCard({ post }: { post: InjuryPost }) {
   const { label, tone } = describePostConflictGap(post);
 
   return (
-    <article className="bg-slate-900 border-2 border-rose-800 rounded-lg overflow-hidden hover:border-rose-700 transition-colors">
+    // Conflict Red is the one saturated red in the system and the kit reserves
+    // it for exactly this. A 2px border rather than the other cards' left rule:
+    // a contradiction is the loudest thing the platform publishes.
+    <article
+      className="bg-slate-900 border-2 rounded-lg overflow-hidden transition-colors"
+      style={{ borderColor: BRAND_COLORS.conflictRed }}
+    >
       <Link href={`/post/${slug}`} className="block p-5">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-rose-400 font-black text-sm tracking-wide">
-            🚩 CONFLICT FLAG
-          </span>
+          <ContentTypeBadge contentType="CONFLICT_FLAG" />
           <SportBadge sport={post.sport} />
           <time className="ml-auto text-xs text-slate-500">
             {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
           </time>
         </div>
 
-        <h2 className="text-xl font-bold text-white mb-3 leading-tight">
+        <h2 className="text-xl font-bold text-bone mb-3 leading-tight">
           {post.athlete_name}
         </h2>
 
-        <div className="bg-rose-950/40 border border-rose-800/50 rounded-md p-3 mb-3 text-sm space-y-1">
+        <div className="bg-inset border border-slate-700 rounded-md p-3 mb-3 text-sm space-y-1">
           <div className="flex justify-between">
             <span className="text-slate-400">Team timeline</span>
-            <span className="text-white font-medium">
+            <span className="text-bone font-medium">
               {post.team_timeline_weeks !== null
                 ? `${post.team_timeline_weeks} weeks remaining`
                 : 'Undisclosed'}
@@ -48,19 +54,18 @@ export function ConflictFlagCard({ post }: { post: InjuryPost }) {
           </div>
           <div className="flex justify-between">
             <span className="text-slate-400">{BRAND_NAME} estimate</span>
-            <span className="text-rose-400 font-medium">{otmEstimate}</span>
+            <span className="font-medium" style={{ color: BRAND_COLORS.conflictRed }}>
+              {otmEstimate}
+            </span>
           </div>
           {/* Shown for every status, not only above threshold: a card that
               printed nothing when the gap was uncomputable was indistinguishable
               from one where the timelines agreed. */}
-          <div className="flex justify-between pt-1 border-t border-rose-800/30">
+          <div className="flex justify-between pt-1 border-t border-slate-700">
             <span className="text-slate-400">Discrepancy</span>
             <span
-              className={
-                tone === 'conflict'
-                  ? 'text-rose-300 font-bold text-right'
-                  : 'text-slate-400 text-right'
-              }
+              className={tone === 'conflict' ? 'font-bold text-right' : 'text-slate-400 text-right'}
+              style={tone === 'conflict' ? { color: BRAND_COLORS.conflictRed } : undefined}
             >
               {label}
             </span>
@@ -85,7 +90,7 @@ export function ConflictFlagCard({ post }: { post: InjuryPost }) {
                 href={`https://warpcast.com/~/conversations/${post.farcaster_hash}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-purple-400 transition-colors"
+                className="hover:text-signal-cyan transition-colors"
               >
                 Farcaster ↗
               </a>
@@ -95,7 +100,7 @@ export function ConflictFlagCard({ post }: { post: InjuryPost }) {
                 href={`https://x.com/i/web/status/${post.twitter_id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-sky-400 transition-colors"
+                className="hover:text-signal-cyan transition-colors"
               >
                 X ↗
               </a>

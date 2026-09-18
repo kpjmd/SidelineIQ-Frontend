@@ -142,7 +142,7 @@ export function MetricsView() {
 
       {/* Series */}
       <section>
-        <h3 className="text-sm font-semibold text-white mb-3">Audience</h3>
+        <h3 className="text-sm font-semibold text-bone mb-3">Audience</h3>
         {data?.snapshots_error && <p className="text-xs text-red-400 mb-2">{data.snapshots_error} — unavailable, not zero.</p>}
         {series && (
           <div className="overflow-x-auto">
@@ -161,7 +161,7 @@ export function MetricsView() {
                     <td className="py-2 pr-3">
                       <button
                         onClick={() => setOpenSeries(openSeries === s.metric ? null : s.metric)}
-                        className="text-slate-200 hover:text-white text-left"
+                        className="text-slate-200 hover:text-bone text-left"
                         disabled={s.readings.length === 0}
                       >
                         {LABEL[s.metric]}
@@ -215,7 +215,7 @@ export function MetricsView() {
 
       {/* Manual entry */}
       <section>
-        <h3 className="text-sm font-semibold text-white mb-3">Record a web number</h3>
+        <h3 className="text-sm font-semibold text-bone mb-3">Record a web number</h3>
         <form onSubmit={submit} className="flex flex-wrap items-end gap-2">
           <label className="text-xs text-slate-500">
             Metric
@@ -254,7 +254,7 @@ export function MetricsView() {
           <button
             type="submit"
             disabled={saving}
-            className="px-3 py-1.5 rounded bg-amber-700 hover:bg-amber-600 text-white text-xs font-medium disabled:opacity-50"
+            className="px-3 py-1.5 rounded bg-amber-700 hover:bg-amber-600 text-bone text-xs font-medium disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Record'}
           </button>
@@ -267,7 +267,7 @@ export function MetricsView() {
 
       {/* CTA clicks */}
       <section>
-        <h3 className="text-sm font-semibold text-white mb-3">
+        <h3 className="text-sm font-semibold text-bone mb-3">
           AequOs link clicks{data ? <span className="text-slate-500 font-normal"> · since {data.clicks_since}</span> : null}
         </h3>
         {data?.clicks_error && <p className="text-xs text-red-400 mb-2">{data.clicks_error} — unavailable, not zero.</p>}
@@ -282,7 +282,7 @@ export function MetricsView() {
                   {data.clicks.by_post.map((p) => (
                     <tr key={p.post_slug} className="border-b border-slate-900">
                       <td className="py-1.5 pr-3">
-                        <a href={`/post/${p.post_slug}`} className="text-slate-300 hover:text-white">
+                        <a href={`/post/${p.post_slug}`} className="text-slate-300 hover:text-bone">
                           {p.post_slug}
                         </a>
                       </td>

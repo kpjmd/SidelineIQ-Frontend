@@ -6,6 +6,8 @@ import { isPubliclyViewable } from '@/lib/types';
 import { DeepDivePost } from '@/components/post/DeepDivePost';
 import { siteUrl as resolveSite } from '@/lib/site-url';
 import { BRAND_NAME, rebrandPost } from '@/lib/brand';
+import { Mark } from '@/components/shared/Mark';
+import { Wordmark } from '@/components/shared/Wordmark';
 
 export const revalidate = 60;
 
@@ -96,7 +98,8 @@ export default async function PostPage({ params }: PageProps) {
       <header className="border-b border-slate-800 bg-slate-950/90 backdrop-blur sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-black text-white tracking-tight">{BRAND_NAME}</span>
+            <Mark size={28} />
+            <Wordmark className="text-xl" />
             <span className="hidden sm:inline text-xs text-slate-500 font-medium mt-0.5">
               Clinical Sports Intelligence
             </span>

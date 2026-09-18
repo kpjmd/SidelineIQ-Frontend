@@ -7,9 +7,15 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  /* `--font-sans: var(--font-sans)` used to sit here, referring to a variable
+     that was never defined anywhere in the repo. Inside `@theme inline` that
+     emits `.font-sans { font-family: var(--font-sans) }` with no :root
+     definition, so `html { @apply font-sans }` resolved to nothing and Geist was
+     downloaded on every page and never applied. Point these at variables that
+     layout.tsx actually publishes. */
+  --font-sans: var(--font-archivo);
+  --font-mono: var(--font-plex-mono);
+  --font-heading: var(--font-archivo);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -48,6 +54,57 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* ---------------------------------------------------------------------------
+   ParatrOs brand kit — "Os Seal Brand Kit" v1, Sept 2026.
+
+   Two blocks, doing two different jobs.
+
+   THIS one overrides Tailwind's own `slate` scale. That looks like a hack and is
+   deliberate: 41 files use ~900 named-palette utilities (`bg-slate-950`,
+   `text-slate-400`, `border-slate-800`), while only three unused shadcn
+   primitives read the `--color-*` tokens below. Redefining the scale recolours
+   the whole app from one place, with no 41-file churn and nothing to keep in
+   sync. The mapping follows the kit's own roles, not lightness arithmetic.
+
+   The kit defines no custom properties itself — every colour in it is an inline
+   hex literal — so these names are authored from its swatch names.
+   --------------------------------------------------------------------------- */
+@theme {
+  /* Named brand tokens, for new code. Prefer these over the slate aliases. */
+  --color-navy: #0a121b;
+  --color-panel: #11202d;
+  --color-inset: #0e1924;
+  --color-bone: #f4f7f9;
+  --color-signal-cyan: #4fc9e6;
+  --color-signal-cyan-hover: #7fdcef;
+  --color-alert-amber: #f0a02a;
+  /* RESERVED. The kit: "the one saturated red in the system ... it never appears
+     as decoration." Only CONFLICT_FLAG and a genuine error may use it. */
+  --color-conflict-red: #e0533f;
+  --color-ink-on-cyan: #06222b;
+  --color-ink-on-amber: #2b1b03;
+  --color-ink-on-bone: #11202d;
+  --color-ink-on-red: #2a0a05;
+
+  /* The existing slate utilities, remapped onto the kit's ramp. */
+  --color-slate-950: #0a121b; /* Chart Navy — page base */
+  --color-slate-900: #101c27; /* panel / card */
+  --color-slate-800: #1e2c3a; /* primary hairline */
+  --color-slate-700: #24384a; /* card border */
+  --color-slate-600: #2b3d4e; /* divider */
+  --color-slate-500: #6c8497; /* muted label */
+  --color-slate-400: #7e97a8; /* mono meta */
+  --color-slate-300: #a8b8c6; /* body secondary */
+  --color-slate-200: #e8edf1; /* body ink */
+  --color-slate-100: #f4f7f9; /* Bone */
+  --color-slate-50: #f4f7f9;
+}
+
+/* DEAD CODE, kept rather than deleted so the shadcn token set stays complete.
+   layout.tsx pins `dark` on <html> unconditionally and there is no theme toggle
+   anywhere in the repo, so `.dark` below is always the active block. Do not
+   spend effort tuning these; if a light theme is ever wanted, that is a design
+   decision the kit has not made (it is a dark system). */
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -83,25 +140,28 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* The live palette. Every value here is a kit colour; the greyscale oklch set
+   this replaced was stock shadcn `neutral` (chroma 0), so the token layer
+   carried no brand hue at all. */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --background: #0a121b; /* Chart Navy */
+  --foreground: #f4f7f9; /* Bone */
+  --card: #101c27;
+  --card-foreground: #f4f7f9;
+  --popover: #11202d; /* Slate Panel */
+  --popover-foreground: #f4f7f9;
+  --primary: #4fc9e6; /* Signal Cyan */
+  --primary-foreground: #06222b;
+  --secondary: #11202d;
+  --secondary-foreground: #f4f7f9;
+  --muted: #0e1924;
+  --muted-foreground: #6c8497;
+  --accent: #11202d;
+  --accent-foreground: #f4f7f9;
+  --destructive: #e0533f; /* Conflict Red — errors only, never decoration */
+  --border: #1e2c3a;
+  --input: #24384a;
+  --ring: #4fc9e6;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -126,5 +186,11 @@
   }
   html {
     @apply font-sans;
+  }
+  /* The kit's only authored CSS rules: `a { color: #4FC9E6 }` and
+     `a:hover { color: #7FDCEF }`. Scoped to links that opt in, so the many
+     existing links with their own utility colours are untouched. */
+  a.brand-link {
+    @apply text-signal-cyan hover:text-signal-cyan-hover;
   }
 }

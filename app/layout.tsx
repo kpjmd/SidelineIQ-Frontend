@@ -1,17 +1,20 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Archivo, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { siteUrl } from '@/lib/site-url';
 import { SiteAnalytics } from '@/components/SiteAnalytics';
 import { BRAND_NAME } from '@/lib/brand';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+// The kit's pair. Archivo is a variable font, so one file covers the 400-800
+// range it asks for; IBM Plex Mono is static and needs its weights named.
+const archivo = Archivo({
+  variable: '--font-archivo',
   subsets: ['latin'],
 });
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const plexMono = IBM_Plex_Mono({
+  variable: '--font-plex-mono',
+  weight: ['400', '500', '600'],
   subsets: ['latin'],
 });
 
@@ -31,9 +34,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      className={`${archivo.variable} ${plexMono.variable} h-full antialiased dark`}
     >
-      <body className="min-h-full bg-slate-950 text-white flex flex-col">
+      {/* bg-background/text-foreground, not bg-slate-950/text-bone: the
+          hardcoded pair overrode `@layer base { body { @apply bg-background
+          text-foreground } }`, so globals.css's tokens governed nothing. */}
+      <body className="min-h-full bg-background text-foreground flex flex-col">
         {children}
         <SiteAnalytics />
       </body>

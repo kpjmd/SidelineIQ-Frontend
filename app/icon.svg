@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="ParatrOs">
+  <rect x="0" y="0" width="64" height="64" fill="#11202D"/>
+  <rect x="14" y="17" width="8" height="30" fill="#F4F7F9"/>
+  <rect x="14" y="17" width="13" height="8" fill="#F4F7F9"/>
+  <rect x="14" y="39" width="13" height="8" fill="#F4F7F9"/>
+  <rect x="42" y="17" width="8" height="30" fill="#F4F7F9"/>
+  <rect x="37" y="17" width="13" height="8" fill="#F4F7F9"/>
+  <rect x="37" y="39" width="13" height="8" fill="#F4F7F9"/>
+  <rect x="30" y="23" width="4" height="18" fill="#4FC9E6"/>
+</svg>

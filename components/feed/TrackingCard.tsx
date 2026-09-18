@@ -5,13 +5,17 @@ import { SportBadge } from '@/components/shared/SportBadge';
 import { ContentTypeBadge } from '@/components/shared/ContentTypeBadge';
 import { OTMSignature } from '@/components/shared/OTMSignature';
 import { stripForPreview } from '@/lib/strip-otm';
+import { CONTENT_TYPE_STYLES } from '@/lib/brand-visual';
 
 export function TrackingCard({ post }: { post: InjuryPost }) {
   const preview = stripForPreview(post.clinical_summary).slice(0, 200);
   const slug = post.slug ?? post.id;
 
   return (
-    <article className="bg-slate-900 border border-slate-700 rounded-lg overflow-hidden hover:border-slate-600 transition-colors border-l-4 border-l-amber-500">
+    <article
+      className="bg-slate-900 border border-slate-700 rounded-lg overflow-hidden hover:border-slate-600 transition-colors border-l-4"
+      style={{ borderLeftColor: CONTENT_TYPE_STYLES.TRACKING.accent }}
+    >
       <Link href={`/post/${slug}`} className="block p-5">
         <div className="flex items-center gap-2 mb-3">
           <ContentTypeBadge contentType="TRACKING" />
@@ -21,10 +25,13 @@ export function TrackingCard({ post }: { post: InjuryPost }) {
           </time>
         </div>
 
-        <h2 className="text-xl font-bold text-white mb-1 leading-tight">
+        <h2 className="text-xl font-bold text-bone mb-1 leading-tight">
           {post.athlete_name}
         </h2>
-        <p className="text-amber-400 font-medium text-sm mb-3">
+        <p
+          className="font-medium text-sm mb-3"
+          style={{ color: CONTENT_TYPE_STYLES.TRACKING.accent }}
+        >
           {post.headline}
         </p>
 
@@ -42,7 +49,7 @@ export function TrackingCard({ post }: { post: InjuryPost }) {
         <div className="px-5 pb-2">
           <Link
             href={`/post/${post.parent_post_id}`}
-            className="text-xs text-amber-500 hover:text-amber-400 transition-colors"
+            className="text-xs text-signal-cyan hover:text-signal-cyan-hover transition-colors"
           >
             See original report →
           </Link>
@@ -57,7 +64,7 @@ export function TrackingCard({ post }: { post: InjuryPost }) {
                 href={`https://warpcast.com/~/conversations/${post.farcaster_hash}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-purple-400 transition-colors"
+                className="hover:text-signal-cyan transition-colors"
               >
                 Farcaster ↗
               </a>
@@ -67,7 +74,7 @@ export function TrackingCard({ post }: { post: InjuryPost }) {
                 href={`https://x.com/i/web/status/${post.twitter_id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-sky-400 transition-colors"
+                className="hover:text-signal-cyan transition-colors"
               >
                 X ↗
               </a>

@@ -32,7 +32,7 @@ export function DeepDivePost({ post, approvedReview }: Props) {
         <ContentTypeBadge contentType={post.content_type} />
         <SportBadge sport={post.sport} />
         {approvedReview && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-900/40 text-amber-400 border border-amber-700/50">
+          <span className="inline-flex items-center gap-1 rounded-sm border border-signal-cyan/40 bg-signal-cyan/10 px-2 py-0.5 text-xs font-medium text-signal-cyan">
             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
             </svg>
@@ -42,7 +42,7 @@ export function DeepDivePost({ post, approvedReview }: Props) {
       </div>
 
       {/* Headline */}
-      <h1 className="text-3xl font-black text-white mb-2 leading-tight">
+      <h1 className="text-3xl font-black text-bone mb-2 leading-tight">
         {post.headline}
       </h1>
 

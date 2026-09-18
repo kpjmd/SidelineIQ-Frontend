@@ -17,7 +17,7 @@ const CONTENT_TYPES: { value: ContentType | 'ALL'; label: string }[] = [
   { value: 'BREAKING', label: 'Breaking' },
   { value: 'TRACKING', label: 'Tracking' },
   { value: 'DEEP_DIVE', label: 'Deep Dive' },
-  { value: 'CONFLICT_FLAG', label: '🚩 Conflict Flag' },
+  { value: 'CONFLICT_FLAG', label: '⚑ Conflict Flag' },
 ];
 
 export function FilterBar() {
@@ -50,7 +50,7 @@ export function FilterBar() {
             onClick={() => updateFilter('sport', value)}
             className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
               currentSport === value
-                ? 'bg-slate-700 text-white'
+                ? 'bg-slate-700 text-bone'
                 : 'text-slate-400 hover:text-slate-300 hover:bg-slate-800'
             }`}
           >
@@ -67,7 +67,7 @@ export function FilterBar() {
             onClick={() => updateFilter('type', value)}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
               currentType === value
-                ? 'bg-slate-700 text-white border-slate-600'
+                ? 'bg-slate-700 text-bone border-slate-600'
                 : 'text-slate-500 hover:text-slate-400 border-slate-700 hover:border-slate-600'
             }`}
           >

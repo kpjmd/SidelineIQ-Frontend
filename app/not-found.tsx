@@ -11,7 +11,7 @@ export default function NotFound() {
       </p>
       <Link
         href="/"
-        className="px-5 py-2 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-500 transition-colors"
+        className="px-5 py-2 rounded-sm bg-signal-cyan text-ink-on-cyan text-sm font-medium hover:bg-signal-cyan-hover transition-colors"
       >
         Back to the feed
       </Link>

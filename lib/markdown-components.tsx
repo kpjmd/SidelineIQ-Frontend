@@ -26,10 +26,10 @@ export const markdownComponents: Components = {
     <td className="px-3 py-2 text-slate-300 border border-slate-700">{children}</td>
   ),
   h1: ({ children }) => (
-    <h1 className="text-2xl font-bold text-white mt-6 mb-3">{children}</h1>
+    <h1 className="text-2xl font-bold text-bone mt-6 mb-3">{children}</h1>
   ),
   h2: ({ children }) => (
-    <h2 className="text-xl font-bold text-white mt-5 mb-2">{children}</h2>
+    <h2 className="text-xl font-bold text-bone mt-5 mb-2">{children}</h2>
   ),
   h3: ({ children }) => (
     <h3 className="text-lg font-semibold text-slate-200 mt-4 mb-2">{children}</h3>
@@ -50,7 +50,7 @@ export const markdownComponents: Components = {
     <li className="text-slate-300">{children}</li>
   ),
   strong: ({ children }) => (
-    <strong className="font-semibold text-white">{children}</strong>
+    <strong className="font-semibold text-bone">{children}</strong>
   ),
   code: ({ children }) => (
     <code className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded text-sm font-mono">
@@ -67,7 +67,7 @@ export const markdownComponents: Components = {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-blue-400 hover:text-blue-300 underline underline-offset-2"
+      className="text-signal-cyan hover:text-signal-cyan-hover underline underline-offset-2"
     >
       {children}
     </a>

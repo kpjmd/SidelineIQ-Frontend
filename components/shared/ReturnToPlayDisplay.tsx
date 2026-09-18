@@ -18,7 +18,7 @@ function ProbBar({ value, label }: { value: number; label: string }) {
       <span className="text-xs text-slate-500 w-14 shrink-0">{label}</span>
       <div className="flex-1 bg-slate-700 rounded-full h-1.5">
         <div
-          className="bg-blue-500 h-1.5 rounded-full transition-all"
+          className="bg-signal-cyan h-1.5 rounded-full transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -51,7 +51,7 @@ export function ReturnToPlayDisplay({
       </h3>
 
       <div className="flex items-baseline gap-2 mb-4">
-        <span className="text-2xl font-bold text-white">
+        <span className="text-2xl font-bold text-bone">
           {return_to_play_min_weeks}–{return_to_play_max_weeks}
         </span>
         <span className="text-slate-400 text-sm">weeks</span>

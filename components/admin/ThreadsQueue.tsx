@@ -93,7 +93,7 @@ export function ThreadsQueue({ initialActive }: Props) {
             onClick={() => switchView(key)}
             className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
               view === key
-                ? 'bg-slate-800 text-white'
+                ? 'bg-slate-800 text-bone'
                 : 'text-slate-500 hover:text-slate-300'
             }`}
           >
@@ -223,7 +223,7 @@ function ThreadCard({
       >
         {thread.sport && <SportBadge sport={thread.sport} />}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-white truncate">
+          <p className="text-sm font-semibold text-bone truncate">
             {thread.athlete_name ?? 'Unknown athlete'}
           </p>
           <p className="text-xs text-slate-500 truncate mt-0.5">
@@ -441,11 +441,11 @@ function AccuracyView({
     <div className="space-y-3">
       <div className="flex items-center gap-4 rounded-lg border border-slate-700 bg-slate-900 p-4">
         <div>
-          <p className="text-2xl font-black text-white tabular-nums">{mae ?? '—'}</p>
+          <p className="text-2xl font-black text-bone tabular-nums">{mae ?? '—'}</p>
           <p className="text-xs text-slate-500">mean abs. error (days)</p>
         </div>
         <div>
-          <p className="text-2xl font-black text-white tabular-nums">
+          <p className="text-2xl font-black text-bone tabular-nums">
             {withinCount}/{withinDenominator}
           </p>
           <p className="text-xs text-slate-500">returns within OTM window</p>
@@ -477,7 +477,7 @@ function AccuracyView({
           <div key={t.id} className="bg-slate-900 border border-slate-700 rounded-lg p-4 flex items-center gap-3">
             {t.sport && <SportBadge sport={t.sport} />}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white truncate">{t.athlete_name ?? 'Unknown'}</p>
+              <p className="text-sm font-semibold text-bone truncate">{t.athlete_name ?? 'Unknown'}</p>
               <p className="text-xs text-slate-500 truncate">{injuryDescriptor(t) || '—'}</p>
             </div>
             <div className="text-right text-xs">
@@ -508,7 +508,7 @@ function AccuracyView({
               type="button"
               onClick={() => void reopen(t)}
               disabled={reopening === t.id}
-              className="text-xs px-2 py-1 rounded border border-slate-600 text-slate-400 hover:text-white hover:border-slate-400 disabled:opacity-40"
+              className="text-xs px-2 py-1 rounded border border-slate-600 text-slate-400 hover:text-bone hover:border-slate-400 disabled:opacity-40"
               title="Undo this close and return the thread to ACTIVE"
             >
               {reopening === t.id ? '…' : 'Reopen'}

@@ -94,7 +94,7 @@ export function MDReviewForm({ review, onUpdate }: Props) {
         <button
           onClick={() => submitReview('APPROVED')}
           disabled={loading}
-          className="px-4 py-2 text-sm font-medium rounded-md bg-amber-700 hover:bg-amber-600 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="px-4 py-2 text-sm font-medium rounded-md bg-amber-700 hover:bg-amber-600 text-bone disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? 'Saving…' : 'Approve & Publish'}
         </button>

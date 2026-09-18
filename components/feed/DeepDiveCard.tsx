@@ -5,6 +5,7 @@ import { SportBadge } from '@/components/shared/SportBadge';
 import { ContentTypeBadge } from '@/components/shared/ContentTypeBadge';
 import { OTMSignature } from '@/components/shared/OTMSignature';
 import { stripForPreview } from '@/lib/strip-otm';
+import { CONTENT_TYPE_STYLES } from '@/lib/brand-visual';
 
 export function DeepDiveCard({ post }: { post: InjuryPost }) {
   const preview = stripForPreview(post.clinical_summary).slice(0, 300);
@@ -19,13 +20,16 @@ export function DeepDiveCard({ post }: { post: InjuryPost }) {
       : null;
 
   return (
-    <article className="bg-slate-900 border border-slate-700 rounded-lg overflow-hidden hover:border-slate-600 transition-colors border-l-4 border-l-blue-500">
+    <article
+      className="bg-slate-900 border border-slate-700 rounded-lg overflow-hidden hover:border-slate-600 transition-colors border-l-4"
+      style={{ borderLeftColor: CONTENT_TYPE_STYLES.DEEP_DIVE.accent }}
+    >
       <Link href={`/post/${slug}`} className="block p-5">
         <div className="flex items-center gap-2 mb-3 flex-wrap">
           <ContentTypeBadge contentType="DEEP_DIVE" />
           <SportBadge sport={post.sport} />
           {isMdReviewed && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-900/40 text-amber-400 border border-amber-700/50">
+            <span className="inline-flex items-center gap-1 rounded-sm border border-signal-cyan/40 bg-signal-cyan/10 px-2 py-0.5 text-xs font-medium text-signal-cyan">
               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
               </svg>
@@ -37,10 +41,15 @@ export function DeepDiveCard({ post }: { post: InjuryPost }) {
           </time>
         </div>
 
-        <h2 className="text-xl font-bold text-white mb-1 leading-tight">
+        <h2 className="text-xl font-bold text-bone mb-1 leading-tight">
           {post.athlete_name}
         </h2>
-        <p className="text-blue-400 font-medium text-sm mb-1">{post.injury_type}</p>
+        <p
+          className="font-medium text-sm mb-1"
+          style={{ color: CONTENT_TYPE_STYLES.DEEP_DIVE.accent }}
+        >
+          {post.injury_type}
+        </p>
 
         {rtpLabel && (
           <p className="text-slate-400 text-xs mb-3 font-medium">{rtpLabel}</p>
@@ -63,7 +72,7 @@ export function DeepDiveCard({ post }: { post: InjuryPost }) {
                 href={`https://warpcast.com/~/conversations/${post.farcaster_hash}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-purple-400 transition-colors"
+                className="hover:text-signal-cyan transition-colors"
               >
                 Farcaster ↗
               </a>
@@ -73,7 +82,7 @@ export function DeepDiveCard({ post }: { post: InjuryPost }) {
                 href={`https://x.com/i/web/status/${post.twitter_id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-sky-400 transition-colors"
+                className="hover:text-signal-cyan transition-colors"
               >
                 X ↗
               </a>

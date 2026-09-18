@@ -135,7 +135,7 @@ export function DraftEditor({
           onChange={(e) => onTitleChange(e.target.value)}
           disabled={locked}
           placeholder="Headline"
-          className="flex-1 bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500 disabled:opacity-60"
+          className="flex-1 bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm text-bone focus:outline-none focus:border-slate-500 disabled:opacity-60"
         />
         <span className={`px-2 py-0.5 rounded text-xs font-semibold border shrink-0 ${statusBadge(status)}`}>
           {status}

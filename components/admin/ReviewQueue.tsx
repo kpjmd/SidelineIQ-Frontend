@@ -157,7 +157,7 @@ export function ReviewQueue({ initialReviews }: Props) {
             >
               {review.sport && <SportBadge sport={review.sport} />}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white truncate">
+                <p className="text-sm font-semibold text-bone truncate">
                   {review.athlete_name}
                 </p>
                 <p className="text-xs text-slate-500 truncate mt-0.5">
