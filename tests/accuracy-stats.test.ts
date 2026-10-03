@@ -1,7 +1,12 @@
 /**
- * The within-window figure divided by every closed thread, so a RETIRED thread
- * or one with no accuracy record counted as a miss. The "denominator" block
- * FAILS against the pre-fix formula (`withinCount / threads.length`).
+ * The accuracy tab's numbers, in the pre-registration's terms.
+ *
+ * The within-window figure used to divide by every closed thread, so a RETIRED
+ * thread or one with no accuracy record counted as a miss; the "denominator"
+ * block FAILS against that formula (`withinCount / threads.length`). The
+ * "one return" block FAILS against any per-thread count: Brian Burns' one
+ * return sat on two threads and was scored twice. The grouping itself is pinned
+ * by tests/accuracy-observations.test.ts against the shared fixture.
  */
 import { describe, it, expect } from 'vitest';
 import { computeAccuracyStats } from '../lib/accuracy-stats';
@@ -11,10 +16,15 @@ function thread(
   id: string,
   status: ThreadListItem['status'],
   record: Partial<AccuracyRecord> | null,
+  extra: Partial<ThreadListItem> = {},
 ): ThreadListItem {
   return {
     id,
+    player_id: `player-${id}`,
     status,
+    sport: 'NFL',
+    first_reported_at: '2026-09-01T12:00:00Z',
+    actual_return_date: null,
     accuracy_record: record
       ? {
           projected_return_date: null,
@@ -26,6 +36,7 @@ function thread(
           ...record,
         }
       : null,
+    ...extra,
   } as ThreadListItem;
 }
 
@@ -39,48 +50,76 @@ describe('within-window denominator', () => {
   ];
   const stats = computeAccuracyStats(threads);
 
-  it('divides by threads that carry a verdict, not by every closed thread', () => {
+  it('divides by returns that carry a verdict, not by every closed thread', () => {
     expect(stats.withinCount).toBe(1);
     expect(stats.withinDenominator).toBe(2);
   });
 
   it('counts what it left out, so the exclusion is visible', () => {
-    expect(stats.excluded).toEqual({ retired: 1, noRecord: 2 });
-    expect(stats.withinDenominator + stats.excluded.retired + stats.excluded.noRecord).toBe(
-      threads.length,
-    );
+    expect(stats.excludedByReason).toEqual({ retired: 1, no_record: 1, no_verdict: 1 });
+    expect(stats.withinDenominator + stats.excludedTotal).toBe(threads.length);
   });
 
   it('a RETIRED thread that somehow carries a verdict is scored on it', () => {
     const s = computeAccuracyStats([thread('r', 'RETIRED', { within_range: false })]);
     expect(s.withinDenominator).toBe(1);
-    expect(s.excluded.retired).toBe(0);
+    expect(s.excludedTotal).toBe(0);
+  });
+
+  it('ignores ACTIVE and VOID threads entirely', () => {
+    const s = computeAccuracyStats([
+      thread('a', 'ACTIVE', null),
+      thread('v', 'VOID', null),
+    ]);
+    expect(s.withinDenominator).toBe(0);
+    expect(s.excludedTotal).toBe(0);
   });
 });
 
-describe('mean absolute error', () => {
-  it('averages |error_days| over the threads that carry one', () => {
+describe('one return, one observation (Amendment 2)', () => {
+  it('counts two threads closed on the same return game once (the Burns case)', () => {
+    const same = { player_id: 'burns', actual_return_date: '2026-09-27' };
+    const s = computeAccuracyStats([
+      thread('sprain', 'RESOLVED', { scoreable: true, within_range: false, error_days: -4, otm_min_weeks: 1, otm_max_weeks: 2 }, {
+        ...same,
+        first_reported_at: '2026-09-22T09:31:57Z',
+      }),
+      thread('surgery', 'RESOLVED', { scoreable: true, within_range: false, error_days: -27, otm_min_weeks: 1, otm_max_weeks: 8 }, {
+        ...same,
+        first_reported_at: '2026-09-23T23:44:46Z',
+      }),
+    ]);
+    expect(s.withinDenominator).toBe(1);
+    expect(s.collapsedGroups).toBe(1);
+    // The earliest-opened thread is the verdict, so its error and window are the ones counted.
+    expect(s.medianErrorDays).toBe(-4);
+    expect(s.windowWeeks.median).toBe(1);
+  });
+});
+
+describe('median signed error (the pre-registered secondary)', () => {
+  it('is the median of signed errors over returns that carry one, with its own n', () => {
     const s = computeAccuracyStats([
       thread('a', 'RESOLVED', { within_range: true, error_days: 3 }),
       thread('b', 'RESOLVED', { within_range: false, error_days: -40 }),
-      thread('c', 'RETIRED', null),
+      thread('c', 'RESOLVED', { within_range: true, error_days: 10 }),
+      thread('d', 'RESOLVED', { within_range: true, error_days: null }),
+      thread('e', 'RETIRED', null),
     ]);
-    expect(s.mae).toBe(22); // (3 + 40) / 2 = 21.5
-    expect(s.maeCount).toBe(2);
+    expect(s.medianErrorDays).toBe(3);
+    expect(s.errorCount).toBe(3);
+    expect(s.withinDenominator).toBe(4);
   });
 
-  it('is null, not zero, with nothing to average', () => {
+  it('is null, not zero, with nothing to take the median of', () => {
     const s = computeAccuracyStats([thread('c', 'RETIRED', null)]);
-    expect(s.mae).toBeNull();
+    expect(s.medianErrorDays).toBeNull();
     expect(s.withinDenominator).toBe(0);
   });
 });
 
 describe('unscoreable reasons', () => {
-  it('names why an excluded thread was excluded, when the record says so', () => {
-    // mcp writes `scoreable: false` plus a reason where it used to write a
-    // record of nulls, so "we got it wrong" and "we never had the inputs to
-    // score it" stopped being the same row.
+  it('names why an excluded return was excluded', () => {
     const s = computeAccuracyStats([
       thread('a', 'RESOLVED', { within_range: true, error_days: 2 }),
       thread('b', 'RESOLVED', { scoreable: false, unscoreable_reason: 'no_projection' }),
@@ -88,24 +127,29 @@ describe('unscoreable reasons', () => {
       thread('d', 'RETIRED', { scoreable: false, unscoreable_reason: 'no_actual_return_date' }),
     ]);
     expect(s.withinDenominator).toBe(1);
-    expect(s.unscoreableReasons).toEqual({
+    expect(s.excludedByReason).toEqual({
       no_projection: 1,
       no_injury_date: 1,
       no_actual_return_date: 1,
     });
-    // The old buckets still hold, because they are the only thing a
-    // pre-2026-09-15 row can answer.
-    expect(s.excluded).toEqual({ retired: 1, noRecord: 2 });
   });
 
-  it('treats an absent scoreable as "derive it", never as false', () => {
-    // Every row written before mcp shipped the field.
+  it('treats an absent scoreable as "derive it", never as false, and flags it legacy', () => {
     const s = computeAccuracyStats([
       thread('a', 'RESOLVED', { within_range: true, error_days: 1 }),
       thread('b', 'RESOLVED', { within_range: false, error_days: 30 }),
     ]);
     expect(s.withinDenominator).toBe(2);
-    expect(s.unscoreableReasons).toEqual({});
+    expect(s.legacy).toBe(2);
+    expect(s.excludedByReason).toEqual({});
+  });
+
+  it('counts a close outside the NFL/NBA scope as out of scope, not as a return', () => {
+    const s = computeAccuracyStats([
+      thread('pl', 'RESOLVED', { scoreable: true, within_range: true, error_days: 1 }, { sport: 'PREMIER_LEAGUE' }),
+    ]);
+    expect(s.withinDenominator).toBe(0);
+    expect(s.outOfScope).toBe(1);
   });
 });
 
@@ -125,8 +169,8 @@ describe('Amendment 1 — calendar censoring', () => {
     ]);
     expect(stats.withinCount).toBe(1);
     expect(stats.withinDenominator).toBe(2);
-    expect(stats.maeCount).toBe(2);
-    expect(stats.unscoreableReasons).toEqual({ calendar_censored: 1 });
+    expect(stats.errorCount).toBe(2);
+    expect(stats.excludedByReason).toEqual({ calendar_censored: 1 });
   });
 
   it('believes scoreable:false over a verdict, and still derives a legacy row', () => {
@@ -141,7 +185,7 @@ describe('Amendment 1 — calendar censoring', () => {
     ]);
     expect(stats.withinDenominator).toBe(1);
     expect(stats.withinCount).toBe(1);
-    expect(stats.maeCount).toBe(1);
-    expect(stats.mae).toBe(2);
+    expect(stats.errorCount).toBe(1);
+    expect(stats.medianErrorDays).toBe(2);
   });
 });
