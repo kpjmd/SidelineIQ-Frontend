@@ -1,87 +1,64 @@
 /**
- * The two numbers on the MD dashboard's accuracy tab, each over its own
- * denominator.
+ * The numbers on the MD dashboard's accuracy tab, in the pre-registration's
+ * terms (sidelineiq-agents docs/accuracy-preregistration.md).
  *
- * `within` used to divide by every closed thread, RETIRED and record-less rows
- * included. A retirement can never be inside an RTP window and a thread with no
- * accuracy record was never scored, so each one read as a miss: the more
- * careers ended, the worse the projections looked. MAE already divided by the
- * threads that carried an error, so the two figures on one card measured
- * different populations.
+ * - Headline: returns inside the published window, X of Y. The denominator is
+ *   scored RETURNS — not every closed thread (a RETIRED or record-less thread
+ *   read as a miss), and since Amendment 2 not every scored thread either: two
+ *   threads closed on one athlete's same return game are one observation
+ *   (Brian Burns' ankle was counted twice).
+ * - Secondary, with its own n: MEDIAN signed error in days. Not MAE, which this
+ *   card used to show — MAE measures distance from the window's midpoint, a
+ *   point the model never claimed, so it scores a call inside the window as an
+ *   error. The pre-registration settles that, and the admin card should not
+ *   train anyone's eye on the number it rejects.
+ * - The window-width distribution, published beside the headline.
+ * - Exclusions by reason, counted per return.
  *
- * The public accuracy page will headline `within_range` (monetization plan,
- * Phase 2), so this is the denominator that number inherits.
+ * All of it comes from `summarizeAccuracy` (lib/accuracy-observations.ts), the
+ * byte-identical twin of the agents helper that `accuracy-report.ts` prints, so
+ * the two readings cannot drift.
  *
  * Pure, and imported relatively for the same no-alias-under-vitest reason as
  * lib/reject.ts.
  */
-import type { ThreadListItem, UnscoreableReason } from './types';
+import { summarizeAccuracy, type NumberSummary } from './accuracy-observations';
+import type { ThreadListItem } from './types';
 
 export interface AccuracyStats {
-  /** Threads whose record says within_range === true. */
+  /** Scored returns inside the published window. */
   withinCount: number;
-  /** Threads whose record answers within_range at all (true or false). */
+  /** Scored returns. */
   withinDenominator: number;
-  /** Mean absolute error_days, rounded, or null when no thread carries one. */
-  mae: number | null;
-  /** Threads carrying a non-null error_days. */
-  maeCount: number;
-  /** Closed threads no within_range verdict was computed for. */
-  excluded: { retired: number; noRecord: number };
-  /**
-   * Why the excluded ones were excluded, when the record says so.
-   *
-   * mcp now writes `scoreable: false` plus a reason where it used to write a
-   * record whose fields were all null (or no record at all), so "we got it
-   * wrong" and "we never had the inputs" stopped being the same row. Empty for
-   * a corpus of pre-2026-09-15 rows, which is why it supplements the two counts
-   * above rather than replacing them.
-   */
-  unscoreableReasons: Partial<Record<UnscoreableReason, number>>;
+  /** Median signed error in days over the returns that carry one. */
+  medianErrorDays: number | null;
+  /** The secondary's own n. */
+  errorCount: number;
+  /** Width of the scored windows, in weeks. */
+  windowWeeks: NumberSummary;
+  /** Returns no verdict was computed for, by reason. */
+  excludedByReason: Record<string, number>;
+  excludedTotal: number;
+  /** Groups of threads that were one return (Amendment 2, A2.1). */
+  collapsedGroups: number;
+  /** Scored returns whose record predates `scoreable` (2026-09-15). */
+  legacy: number;
+  /** Closed threads outside the NFL/NBA scope. */
+  outOfScope: number;
 }
 
 export function computeAccuracyStats(threads: ThreadListItem[]): AccuracyStats {
-  let withinCount = 0;
-  let withinDenominator = 0;
-  let errorSum = 0;
-  let maeCount = 0;
-  let retired = 0;
-  let noRecord = 0;
-  const unscoreableReasons: Partial<Record<UnscoreableReason, number>> = {};
-
-  for (const t of threads) {
-    const rec = t.accuracy_record;
-    const verdict = rec?.within_range;
-    // `scoreable: false` outranks a verdict. mcp never writes both, but the
-    // record's own statement that it cannot be counted is the one to believe —
-    // and `undefined` (pre-2026-09-15) still means "derive it from the verdict".
-    const counted = rec?.scoreable !== false && (verdict === true || verdict === false);
-
-    if (counted) {
-      withinDenominator++;
-      if (verdict) withinCount++;
-    } else {
-      // A named reason is better than a bucket, but the buckets stay: they are
-      // the only thing a pre-2026-09-15 row can answer.
-      const reason = rec?.unscoreable_reason;
-      if (reason) unscoreableReasons[reason] = (unscoreableReasons[reason] ?? 0) + 1;
-      if (t.status === 'RETIRED') retired++;
-      else noRecord++;
-    }
-
-    const err = rec?.error_days;
-    if (rec?.scoreable !== false && typeof err === 'number' && Number.isFinite(err)) {
-      errorSum += Math.abs(err);
-      maeCount++;
-    }
-  }
-
+  const s = summarizeAccuracy(threads);
   return {
-    withinCount,
-    withinDenominator,
-    mae: maeCount > 0 ? Math.round(errorSum / maeCount) : null,
-    maeCount,
-    excluded: { retired, noRecord },
-    unscoreableReasons,
+    withinCount: s.within,
+    withinDenominator: s.n,
+    medianErrorDays: s.signed_error_days.median,
+    errorCount: s.signed_error_days.n,
+    windowWeeks: s.window_weeks,
+    excludedByReason: s.excluded_by_reason,
+    excludedTotal: s.exclusions.length,
+    collapsedGroups: s.collapsed.length,
+    legacy: s.legacy,
+    outOfScope: s.out_of_scope,
   };
 }

@@ -18,7 +18,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { rejectPost, type RejectDeps } from '../lib/reject';
-import type { InjuryEntity, InjuryUpdate } from '../lib/types';
+import type { InjuryEntity, InjuryPost, InjuryUpdate } from '../lib/types';
 
 const POST = 'post-under-review';
 const REVIEW = 'review-1';
@@ -34,6 +34,10 @@ const soleAnchorEntity = {
 function deps(over: Partial<RejectDeps> = {}) {
   const calls: string[] = [];
   const base: RejectDeps = {
+    getPostById: vi.fn(async () => {
+      calls.push('getPostById');
+      return { id: POST, status: 'PENDING_REVIEW' } as InjuryPost;
+    }),
     getEntityForPost: vi.fn(async () => {
       calls.push('getEntityForPost');
       return soleAnchorEntity;
@@ -158,5 +162,46 @@ describe('isRetiredPostStatus', () => {
   ])('%s → %s', async (status, expected) => {
     const { isRetiredPostStatus } = await import('../lib/types');
     expect(isRetiredPostStatus(status as string | null | undefined)).toBe(expected);
+  });
+});
+
+describe('a live post never takes its thread with it (Gwyn, 2026-10-01)', () => {
+  // FAILS pre-fix: the thread was voided whatever the post's status, so
+  // rejecting the review of an already-PUBLISHED post retracted the thread of
+  // content that stayed public — and VOID cannot be reopened.
+  it('rejects the review of a PUBLISHED post without voiding its thread', async () => {
+    const { deps: d } = deps({
+      getPostById: vi.fn(async () => ({ id: POST, status: 'PUBLISHED' }) as InjuryPost),
+      rejectInjuryPost: vi.fn(async () => ({
+        post_id: POST,
+        review_id: REVIEW,
+        post_updated: false,
+        post_status: 'PUBLISHED' as const,
+        review_status: 'REJECTED' as const,
+        entity_links_cleared: { canonical: 0, updates: 0 },
+      })),
+    });
+    const out = await rejectPost({ postId: POST, mdUserId: 'md-1' }, d);
+    expect(d.closeThread).not.toHaveBeenCalled();
+    expect(d.getEntityForPost).not.toHaveBeenCalled();
+    expect(d.rejectInjuryPost).toHaveBeenCalled();
+    expect(out.voided_thread).toBeNull();
+    expect(out.post_updated).toBe(false);
+  });
+
+  it('leaves the thread alone when the post status cannot be read', async () => {
+    const { deps: d } = deps({ getPostById: vi.fn(async () => null) });
+    const out = await rejectPost({ postId: POST, mdUserId: 'md-1' }, d);
+    expect(d.closeThread).not.toHaveBeenCalled();
+    expect(d.rejectInjuryPost).toHaveBeenCalled();
+    expect(out.voided_thread).toBeNull();
+  });
+
+  it('still voids for a PENDING_REVIEW post, before the rejection', async () => {
+    const { deps: d, calls } = deps();
+    const out = await rejectPost({ postId: POST, mdUserId: 'md-1' }, d);
+    expect(out.voided_thread).toBe(ENTITY);
+    expect(calls.indexOf('getPostById')).toBeLessThan(calls.indexOf('closeThread'));
+    expect(calls.indexOf('closeThread')).toBeLessThan(calls.indexOf('rejectInjuryPost'));
   });
 });

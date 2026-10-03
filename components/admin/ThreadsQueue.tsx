@@ -371,6 +371,9 @@ const UNSCOREABLE_LABEL: Record<string, string> = {
   no_injury_date: 'no injury date',
   no_actual_return_date: 'no return recorded',
   calendar_censored: 'first game available (censored)',
+  retired: 'retired',
+  no_record: 'no accuracy record',
+  no_verdict: 'no verdict',
 };
 
 function AccuracyView({
@@ -421,10 +424,17 @@ function AccuracyView({
   if (loading && threads.length === 0) {
     return <p className="text-center py-12 text-slate-500 text-sm">Loading…</p>;
   }
-  const { mae, withinCount, withinDenominator, excluded, unscoreableReasons } =
-    computeAccuracyStats(threads);
-  const excludedTotal = excluded.retired + excluded.noRecord;
-  const reasonSummary = Object.entries(unscoreableReasons)
+  const {
+    withinCount,
+    withinDenominator,
+    medianErrorDays,
+    errorCount,
+    windowWeeks,
+    excludedByReason,
+    excludedTotal,
+    collapsedGroups,
+  } = computeAccuracyStats(threads);
+  const reasonSummary = Object.entries(excludedByReason)
     .map(([reason, n]) => `${n} ${UNSCOREABLE_LABEL[reason] ?? reason}`)
     .join(' · ');
 
@@ -441,24 +451,39 @@ function AccuracyView({
     <div className="space-y-3">
       <div className="flex items-center gap-4 rounded-lg border border-slate-700 bg-slate-900 p-4">
         <div>
-          <p className="text-2xl font-black text-bone tabular-nums">{mae ?? '—'}</p>
-          <p className="text-xs text-slate-500">mean abs. error (days)</p>
-        </div>
-        <div>
           <p className="text-2xl font-black text-bone tabular-nums">
             {withinCount}/{withinDenominator}
           </p>
-          <p className="text-xs text-slate-500">returns within OTM window</p>
+          <p className="text-xs text-slate-500">returns inside the published window</p>
         </div>
-        {excludedTotal > 0 && (
+        <div>
+          <p className="text-2xl font-black text-bone tabular-nums">
+            {medianErrorDays === null ? '—' : `${medianErrorDays > 0 ? '+' : ''}${medianErrorDays}`}
+          </p>
+          <p className="text-xs text-slate-500">median signed error, days (n={errorCount})</p>
+        </div>
+        <div>
+          <p className="text-2xl font-black text-bone tabular-nums">
+            {windowWeeks.median === null ? '—' : `${windowWeeks.median}w`}
+          </p>
+          <p className="text-xs text-slate-500">
+            median window width
+            {windowWeeks.min !== null && ` (${windowWeeks.min}–${windowWeeks.max}w)`}
+          </p>
+        </div>
+        {(excludedTotal > 0 || collapsedGroups > 0) && (
           <p className="ml-auto text-xs text-slate-500 text-right">
-            {excludedTotal} excluded
-            <br />
-            {excluded.retired} retired · {excluded.noRecord} not scored
+            {excludedTotal} returns excluded
             {reasonSummary && (
               <>
                 <br />
                 {reasonSummary}
+              </>
+            )}
+            {collapsedGroups > 0 && (
+              <>
+                <br />
+                {collapsedGroups} duplicate-thread {collapsedGroups === 1 ? 'group' : 'groups'} counted once
               </>
             )}
           </p>

@@ -4,6 +4,7 @@
 import {
   closeThread,
   getEntityForPost,
+  getPostById,
   listInjuryUpdates,
   rejectInjuryPost,
   type RejectPostResult,
@@ -28,9 +29,21 @@ import { shouldVoidThreadOnReject } from './reject-void';
  * and the MD can retry; the reverse leaves an ACTIVE orphan thread absorbing
  * later reports, which is the Greenard bug mcp migration 020 closed.
  *
+ * Only a PENDING_REVIEW post may take its thread with it. Rejecting the review
+ * of an already-live post is a real flow — the mcp closes the review and
+ * deliberately leaves the post PUBLISHED (`post_updated: false`) — and voiding
+ * there retracted the thread of content that stays public. Jovaughn Gwyn,
+ * 2026-10-01: post bee3797b approved at 18:16, review rejected at 18:23, thread
+ * VOIDed "MD rejected the thread's only post" while the post stayed live on
+ * the site and both social accounts. VOID cannot be reopened, so the thread's
+ * published RTP window was lost to the accuracy record for good. An unreadable
+ * post status leaves the thread alone too: a wrongly-voided thread is
+ * unrecoverable, an un-voided orphan is one void-thread.ts call away.
+ *
  * Dependencies are injected so this is testable without a Next request.
  */
 export interface RejectDeps {
+  getPostById: typeof getPostById;
   getEntityForPost: typeof getEntityForPost;
   listInjuryUpdates: typeof listInjuryUpdates;
   closeThread: typeof closeThread;
@@ -38,6 +51,7 @@ export interface RejectDeps {
 }
 
 const defaultDeps: RejectDeps = {
+  getPostById,
   getEntityForPost,
   listInjuryUpdates,
   closeThread,
@@ -82,6 +96,15 @@ async function voidAnchoredThread(
   reason: string | undefined,
 ): Promise<string | null> {
   try {
+    const post = await deps.getPostById(postId);
+    if (post?.status !== 'PENDING_REVIEW') {
+      console.warn(
+        `[Reject] post ${postId} is ${post?.status ?? 'unreadable'}, not PENDING_REVIEW — ` +
+          'its thread is left alone; only a post that never reached an audience can retract one',
+      );
+      return null;
+    }
+
     const entity = await deps.getEntityForPost(postId);
     if (!entity) return null;
 
