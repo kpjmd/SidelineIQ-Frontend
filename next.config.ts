@@ -18,6 +18,8 @@ const nextConfig: NextConfig = {
     '/twitter-image': ['./app/fonts/*.ttf'],
     '/post/[slug]/opengraph-image': ['./app/fonts/*.ttf'],
     '/post/[slug]/twitter-image': ['./app/fonts/*.ttf'],
+    '/ledger/[entryId]/opengraph-image': ['./app/fonts/*.ttf'],
+    '/ledger/[entryId]/twitter-image': ['./app/fonts/*.ttf'],
   },
 };
 
