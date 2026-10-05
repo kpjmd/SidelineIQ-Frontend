@@ -115,6 +115,36 @@ Two files exist in two repos and must be changed in both:
   arithmetic there first, bump the version, re-record the fixture, copy both.
 - **`lib/referral-cta.ts`** ↔ agents `carriesReferralCta` — identical body, held
   in sync by **comment only**, with no fixture and no version constant.
+- **`lib/ledger-copy.ts`**, **`lib/ledger-row-hash.ts`**, **`lib/ledger-fields.ts`**
+  ↔ agents `src/ledger/{copy,row-hash,fields}.ts` — byte-identical (the agents
+  repo owns them; `cmp` must be clean), pinned by `tests/fixtures/ledger-copy.json`
+  and `tests/fixtures/ledger-hash-cases.json`, both RECORDED in the agents repo
+  and copied here. `LEDGER_COPY_VERSION` / `LEDGER_HASH_VERSION` must match.
+  Every string a ledger reader sees comes from `lib/ledger-copy.ts`; never
+  `BRAND_SIGNATURE_*` on ledger content, never the physician credential on an
+  injury post. `lib/ledger-draft-form.ts`'s `tweetIdFromUrl` mirrors agents
+  `src/ledger/post-text.ts` by comment only.
+
+## The Prognosis Ledger (Stage 2, 2026-10-05)
+
+- `/admin/ledger` (md only): drafts, **Confirm and publish**, revisions, and
+  distribution. The confirm step is `web_publish_ledger_forecast` with the
+  SESSION user id — the mcp re-derives the role; a blocked gate is 422 with
+  reasons, exactly like the Desk. After a publish the route asks the agents for
+  a DRY RUN preview; **Post and commit** calls `forecasts/[id]/distribute` with
+  `dry_run:false`. The agents' `LEDGER_PUBLISH_DRY_RUN` env still wins, and the
+  preview says so.
+- No content crosses the frontend→agents boundary (`lib/ledger-publish.ts`):
+  the agents read the row or the approved proposal by id.
+- `/admin/ledger/replies`: **Approve and post** records the approval first
+  (`web_decide_reply approved`, with the edited text), then the agents post
+  by id. A row approved-and-claimed with no `posted_id` is shown as "verify
+  manually", never auto-retried.
+- Public: `/ledger` and `/ledger/[entryId]` carry `LEDGER_COPY.full_disclaimer`
+  and the AI line on every page; the OG card (`app/ledger/[entryId]/
+  opengraph-image.tsx`) re-verifies `row_hash` with the twin before drawing and
+  MAY carry numbers (rows are immutable; see `lib/ledger-card.ts`). Both OG
+  routes are in `next.config.ts` `outputFileTracingIncludes`.
 
 ## Surfaces
 

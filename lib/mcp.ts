@@ -30,6 +30,14 @@ import type {
   ThreadListItem,
 } from './types';
 import { listAllThreadPages, type ThreadFilters, type ThreadPage } from './thread-paging';
+import type {
+  LedgerBaseRate,
+  LedgerDraftInput,
+  LedgerEntryDetail,
+  LedgerForecast,
+  LedgerPublishResult,
+  ReplyProposal,
+} from './ledger-types';
 import type { CtaClickSummary, ManualMetric, MetricSnapshot } from './metrics-summary';
 import type { CtaLink } from './cta-click';
 
@@ -499,4 +507,102 @@ export async function listCtaClicks(since?: string): Promise<CtaClickSummary> {
 
 export async function incrementCtaClick(postSlug: string, link: CtaLink): Promise<{ counted: boolean }> {
   return callMCPTool<{ counted: boolean }>('web_increment_cta_click', { post_slug: postSlug, link });
+}
+
+// ── Prognosis Ledger (mcp migrations 026/027) ─────────────────────────────
+//
+// Every input is .strict(): an undefined key is dropped before the call
+// (`defined`) because an unknown or undefined-valued key fails the WHOLE call.
+
+function defined<T extends Record<string, unknown>>(obj: T): Partial<T> {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as Partial<T>;
+}
+
+export async function listLedgerBaseRates(): Promise<LedgerBaseRate[]> {
+  const result = await callMCPTool<{ base_rates: LedgerBaseRate[] }>('web_list_ledger_base_rates', {});
+  return result.base_rates;
+}
+
+export async function createLedgerDraft(
+  input: LedgerDraftInput & { created_by: string; parent_entry_id?: string | null },
+): Promise<LedgerForecast> {
+  const result = await callMCPTool<{ draft: LedgerForecast }>('web_create_ledger_draft', defined({ ...input }));
+  return result.draft;
+}
+
+export async function updateLedgerDraft(
+  input: Partial<LedgerDraftInput> & { draft_id: string; edited_by: string },
+): Promise<LedgerForecast> {
+  const result = await callMCPTool<{ draft: LedgerForecast }>('web_update_ledger_draft', defined({ ...input }));
+  return result.draft;
+}
+
+export async function deleteLedgerDraft(draftId: string, reviewerUserId: string): Promise<{ deleted: boolean }> {
+  return callMCPTool<{ deleted: boolean }>('web_delete_ledger_draft', { draft_id: draftId, reviewer_user_id: reviewerUserId });
+}
+
+// THE CONFIRMATION STEP. A blocked publish is a SUCCESSFUL call
+// ({published:false, gate}) — the route maps it to HTTP 422, never to an error.
+export async function publishLedgerForecast(draftId: string, reviewerUserId: string): Promise<LedgerPublishResult> {
+  return callMCPTool<LedgerPublishResult>('web_publish_ledger_forecast', {
+    draft_id: draftId,
+    reviewer_user_id: reviewerUserId,
+  });
+}
+
+export async function getLedgerForecast(forecastId: string): Promise<LedgerForecast> {
+  const result = await callMCPTool<{ forecast: LedgerForecast }>('web_get_ledger_forecast', { forecast_id: forecastId });
+  return result.forecast;
+}
+
+/** null when the entry does not exist or is not yet published (the mcp 404s both). */
+export async function getLedgerEntry(entryId: string): Promise<LedgerEntryDetail | null> {
+  try {
+    return await callMCPTool<LedgerEntryDetail>('web_get_ledger_entry', { entry_id: entryId });
+  } catch (err) {
+    if (err instanceof Error && /not found/i.test(err.message)) return null;
+    throw err;
+  }
+}
+
+export async function listLedgerEntries(opts: { include_drafts?: boolean; season?: number | null; limit?: number; offset?: number } = {}): Promise<LedgerForecast[]> {
+  const result = await callMCPTool<{ forecasts: LedgerForecast[] }>('web_list_ledger_entries', defined({ ...opts }));
+  return result.forecasts;
+}
+
+export async function listReplyProposals(decision: ReplyProposal['decision'] | null = 'pending'): Promise<ReplyProposal[]> {
+  const result = await callMCPTool<{ proposals: ReplyProposal[] }>('web_list_reply_proposals', { decision });
+  return result.proposals;
+}
+
+/** 027: the MD approves (with the final wording, if edited) or discards. 'posted' is not a decision a caller can make. */
+export async function decideReply(input: {
+  proposal_id: string;
+  reviewer_user_id: string;
+  decision: 'approved' | 'discarded';
+  approved_text?: string | null;
+  note?: string | null;
+}): Promise<ReplyProposal> {
+  const result = await callMCPTool<{ proposal: ReplyProposal }>('web_decide_reply', defined({ ...input }));
+  return result.proposal;
+}
+
+export interface PlayerResolution {
+  resolved: boolean;
+  player:
+    | (Record<string, unknown> & {
+        id?: string;
+        name?: string;
+        espn_athlete_id?: string | null;
+        confidence?: 'exact' | 'normalized' | 'ambiguous' | string;
+        current_team_name?: string | null;
+        current_team_abbreviation?: string | null;
+        position?: string | null;
+      })
+    | null;
+}
+
+/** web_resolve_player by name; `confidence: 'ambiguous'` means two rostered athletes share it — treat as unresolved. */
+export async function resolvePlayer(name: string, sport: 'NFL' = 'NFL'): Promise<PlayerResolution> {
+  return callMCPTool<PlayerResolution>('web_resolve_player', { name, sport });
 }

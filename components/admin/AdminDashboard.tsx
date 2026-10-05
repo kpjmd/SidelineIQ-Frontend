@@ -86,6 +86,10 @@ export function AdminDashboard({
             </Link>
             <span className="text-slate-700">·</span>
             <span className="font-mono text-xs tracking-[0.14em] text-slate-400">MD REVIEW</span>
+            <span className="text-slate-700">·</span>
+            <Link href="/admin/ledger" className="font-mono text-xs tracking-[0.14em] text-slate-500 hover:text-slate-300">
+              LEDGER
+            </Link>
           </div>
           <button
             onClick={() => signOut({ callbackUrl: '/signin' })}

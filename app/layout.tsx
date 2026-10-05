@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: `${BRAND_NAME} — Clinical Sports Injury Intelligence`,
   description:
-    'Autonomous AI-powered sports injury analysis with return-to-play timelines, clinical breakdowns, and conflict detection across NFL, NBA, Premier League, and UFC.',
+    'AI sports injury intelligence with return-to-play timelines, clinical breakdowns, and conflict detection across NFL, NBA, Premier League, and UFC.',
 };
 
 export default function RootLayout({

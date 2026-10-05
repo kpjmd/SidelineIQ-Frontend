@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { listPosts } from '@/lib/mcp';
+import { listPosts, listLedgerEntries } from '@/lib/mcp';
 import { siteUrl as resolveSite } from '@/lib/site-url';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -29,6 +29,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: post.content_type === 'DEEP_DIVE' ? 1.0 : 0.8,
     }));
 
+  // The Prognosis Ledger (published rows only; drafts never have a URL). Loaded
+  // independently so a mid-deploy MCP without the ledger tools cannot blank the
+  // post entries.
+  let ledgerEntries: MetadataRoute.Sitemap = [];
+  try {
+    const rows = await listLedgerEntries({ limit: 200 });
+    const latestByEntry = new Map<string, { updated: string }>();
+    for (const r of rows) {
+      if (!r.entry_id || !r.published_at) continue;
+      const prev = latestByEntry.get(r.entry_id);
+      if (!prev || prev.updated < r.published_at) latestByEntry.set(r.entry_id, { updated: r.published_at });
+    }
+    ledgerEntries = [
+      { url: `${siteUrl}/ledger`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.9 },
+      ...[...latestByEntry.entries()].map(([entryId, v]) => ({
+        url: `${siteUrl}/ledger/${entryId}`,
+        lastModified: new Date(v.updated),
+        changeFrequency: 'weekly' as const,
+        priority: 0.8,
+      })),
+    ];
+  } catch (err) {
+    console.error('sitemap ledger load error:', err);
+  }
+
   return [
     {
       url: siteUrl,
@@ -37,5 +62,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1.0,
     },
     ...postEntries,
+    ...ledgerEntries,
   ];
 }
