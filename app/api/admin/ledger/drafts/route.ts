@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMd } from '@/lib/desk-auth';
 import { createLedgerDraft, listLedgerEntries } from '@/lib/mcp';
-import { validateDraftInput, forbiddenWordsIn, hashPreviewFor } from '@/lib/ledger-draft-form';
+import { validateDraftInput, forbiddenWordsIn, hashPreviewFor, forecastWarnings } from '@/lib/ledger-draft-form';
 
 /** Every forecast row, drafts included, newest first. */
 export async function GET() {
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   if (!v.ok) return NextResponse.json({ error: 'Draft is incomplete', errors: v.errors }, { status: 400 });
   try {
     const draft = await createLedgerDraft({ ...v.value, created_by: gate.userId, parent_entry_id: parentEntryId });
-    return NextResponse.json({ draft, forbidden_words: forbiddenWordsIn(draft), hash_preview: hashPreviewFor(draft) }, { status: 201 });
+    return NextResponse.json({ draft, forbidden_words: forbiddenWordsIn(draft), hash_preview: hashPreviewFor(draft), warnings: forecastWarnings(draft) }, { status: 201 });
   } catch (err) {
     console.error('ledger create draft error:', err);
     return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to create draft' }, { status: 400 });

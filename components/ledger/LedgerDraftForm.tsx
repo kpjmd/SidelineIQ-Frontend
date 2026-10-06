@@ -100,7 +100,7 @@ export function LedgerDraftForm({ baseRates, initial, parentEntryId, onPublished
   const [draftVersion, setDraftVersion] = useState<number | null>(initial && initial.status === 'draft' ? initial.version : null);
   const [errors, setErrors] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState<{ hash: HashPreview; forbidden: Array<{ field: string; words: string[] }> } | null>(null);
+  const [saved, setSaved] = useState<{ hash: HashPreview; forbidden: Array<{ field: string; words: string[] }>; warnings: string[] } | null>(null);
   const [resolution, setResolution] = useState<PlayerResolution | null>(null);
   const [resolving, setResolving] = useState(false);
   const [lookup, setLookup] = useState<NflverseLookup | { status: 'unavailable'; error: string } | null>(null);
@@ -213,14 +213,14 @@ export function LedgerDraftForm({ baseRates, initial, parentEntryId, onPublished
         router.push('/signin');
         return null;
       }
-      const data = (await res.json().catch(() => ({}))) as { draft?: LedgerForecast; hash_preview?: HashPreview; forbidden_words?: Array<{ field: string; words: string[] }>; error?: string; errors?: string[] };
+      const data = (await res.json().catch(() => ({}))) as { draft?: LedgerForecast; hash_preview?: HashPreview; forbidden_words?: Array<{ field: string; words: string[] }>; warnings?: string[]; error?: string; errors?: string[] };
       if (!res.ok || !data.draft) {
         setErrors(data.errors ?? [data.error ?? 'Save failed']);
         return null;
       }
       setDraftId(data.draft.id);
       setDraftVersion(data.draft.version);
-      setSaved({ hash: data.hash_preview!, forbidden: data.forbidden_words ?? [] });
+      setSaved({ hash: data.hash_preview!, forbidden: data.forbidden_words ?? [], warnings: data.warnings ?? [] });
       return data.draft.id;
     } catch (err) {
       setErrors([err instanceof Error ? err.message : 'Save failed']);
@@ -464,6 +464,13 @@ export function LedgerDraftForm({ baseRates, initial, parentEntryId, onPublished
               <pre className="max-h-40 overflow-auto rounded bg-slate-950 p-2 text-[11px] text-slate-400">{JSON.stringify(saved.hash.input, null, 2)}</pre>
             </>
           )}
+          {saved.warnings.length > 0 && (
+            <ul className="rounded border border-amber-800 bg-amber-950/40 p-3 text-xs text-amber-200 list-disc list-inside space-y-0.5">
+              {saved.warnings.map((w, i) => (
+                <li key={i}>{w}</li>
+              ))}
+            </ul>
+          )}
           {forbiddenCount > 0 ? (
             <p className="text-xs text-amber-300">
               Vocabulary rule: {saved.forbidden.map((f) => `${f.field}: ${f.words.join(', ')}`).join(' · ')}. The publish will be refused at distribution; rephrase before confirming.
@@ -497,6 +504,16 @@ export function LedgerDraftForm({ baseRates, initial, parentEntryId, onPublished
             </div>
             <p className="text-xs text-slate-400">
               Confirming stamps the time, allocates the entry id, hashes the row and makes it immutable. The five numbers, the F4 interval, the mechanism line and “what would move this” go out under your name. Nothing is posted yet: the next screen shows exactly what will be sent.
+            </p>
+            {saved && saved.warnings.length > 0 && (
+              <ul className="rounded border border-amber-800 bg-amber-950/40 p-3 text-xs text-amber-200 list-disc list-inside space-y-0.5">
+                {saved.warnings.map((w, i) => (
+                  <li key={i}>{w}</li>
+                ))}
+              </ul>
+            )}
+            <p className="text-xs text-amber-300">
+              This cannot be undone or edited. A published row is immutable; a wrong number can only be followed by a revision with a named public trigger.
             </p>
             <label className="flex items-start gap-2 text-sm text-slate-300 cursor-pointer">
               <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-0.5 accent-emerald-600" />
