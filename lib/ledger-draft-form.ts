@@ -168,3 +168,68 @@ export function hashPreviewFor(draft: LedgerForecast): HashPreview {
     };
   }
 }
+
+export type BaseRateValidation = { ok: true; value: Omit<import('./mcp').BaseRateInput, 'updated_by'> } | { ok: false; errors: string[] };
+
+/**
+ * Validate a base-rate row. Every forecast prior is optional (a thin row may
+ * carry only F4), but what is present must be a probability or whole games,
+ * and the F4 interval must be ordered. row_key is the stable key a forecast
+ * copies, so it is slug-shaped and never renamed.
+ */
+export function validateBaseRateInput(body: unknown): BaseRateValidation {
+  const b = (body ?? {}) as Record<string, unknown>;
+  const errors: string[] = [];
+  const row_key = str(b.row_key)?.toLowerCase() ?? null;
+  if (!row_key || !/^[a-z0-9_]{2,64}$/.test(row_key)) errors.push('row_key must be 2–64 characters of a–z, 0–9 and _ (e.g. hamstring_strain)');
+  const injury_type = str(b.injury_type);
+  if (!injury_type) errors.push('injury_type is required');
+  const strength = ['strong', 'moderate', 'thin'].includes(String(b.strength)) ? (b.strength as 'strong' | 'moderate' | 'thin') : null;
+  if (!strength) errors.push('strength must be strong, moderate or thin');
+  const optProb = (k: string): number | null | undefined => {
+    const v = b[k];
+    if (v === undefined || v === null || v === '') return null;
+    const p = prob(v);
+    if (p === null) errors.push(`${k} must be a probability from 0 to 1`);
+    return p;
+  };
+  const optGames = (k: string): number | null => {
+    const v = b[k];
+    if (v === undefined || v === null || v === '') return null;
+    const g = games(v);
+    if (g === null) errors.push(`${k} must be whole games (0 or more)`);
+    return g;
+  };
+  const f1_ir = optProb('f1_ir');
+  const f2_next = optProb('f2_next');
+  const f3_4wk = optProb('f3_4wk');
+  const f5_reinjury = optProb('f5_reinjury');
+  const f4_point = optGames('f4_point');
+  const f4_low = optGames('f4_low');
+  const f4_high = optGames('f4_high');
+  if (f4_point !== null && f4_low !== null && f4_high !== null && !(f4_low <= f4_point && f4_point <= f4_high)) errors.push('F4 interval must satisfy low ≤ point ≤ high');
+  const source_rank = b.source_rank === undefined || b.source_rank === null || b.source_rank === '' ? null : games(b.source_rank);
+  if (source_rank !== null && (source_rank < 1 || source_rank > 4)) errors.push('source_rank is 1 (empirical NFL history) to 4 (general athletic populations)');
+  const n = optGames('n');
+  if (errors.length > 0) return { ok: false, errors };
+  return {
+    ok: true,
+    value: {
+      row_key: row_key as string,
+      injury_type: injury_type as string,
+      strength: strength as 'strong' | 'moderate' | 'thin',
+      source_rank,
+      sources: str(b.sources),
+      n,
+      year_range: str(b.year_range),
+      f1_ir: f1_ir ?? null,
+      f2_next: f2_next ?? null,
+      f3_4wk: f3_4wk ?? null,
+      f5_reinjury: f5_reinjury ?? null,
+      f4_point,
+      f4_low,
+      f4_high,
+      notes: str(b.notes),
+    },
+  };
+}

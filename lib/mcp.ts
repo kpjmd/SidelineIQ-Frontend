@@ -606,3 +606,28 @@ export interface PlayerResolution {
 export async function resolvePlayer(name: string, sport: 'NFL' = 'NFL'): Promise<PlayerResolution> {
   return callMCPTool<PlayerResolution>('web_resolve_player', { name, sport });
 }
+
+/** One row of the base-rate sheet (spec "Base-rate sheet"); the physician enters these. Upsert by row_key. */
+export interface BaseRateInput {
+  row_key: string;
+  injury_type: string;
+  strength: LedgerBaseRate['strength'];
+  source_rank?: number | null;
+  sources?: string | null;
+  n?: number | null;
+  year_range?: string | null;
+  f1_ir?: number | null;
+  f2_next?: number | null;
+  f3_4wk?: number | null;
+  f5_reinjury?: number | null;
+  f4_point?: number | null;
+  f4_low?: number | null;
+  f4_high?: number | null;
+  notes?: string | null;
+  updated_by: string;
+}
+
+export async function upsertLedgerBaseRate(input: BaseRateInput): Promise<LedgerBaseRate> {
+  const result = await callMCPTool<{ base_rate: LedgerBaseRate }>('web_upsert_ledger_base_rate', defined({ ...input }));
+  return result.base_rate;
+}

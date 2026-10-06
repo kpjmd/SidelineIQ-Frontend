@@ -72,3 +72,15 @@ describe('pre-confirm checks', () => {
     expect(bad.error).toMatch(/trigger/);
   });
 });
+
+describe('validateBaseRateInput', () => {
+  it('accepts a thin row with only F4, normalises the key, and rejects a disordered interval', async () => {
+    const { validateBaseRateInput } = await import('../lib/ledger-draft-form');
+    const ok = validateBaseRateInput({ row_key: 'Low_Ankle_Sprain', injury_type: 'Low ankle sprain', strength: 'thin', f4_point: '1', f4_low: '0', f4_high: '2', f1_ir: '', source_rank: '4' });
+    expect(ok.ok).toBe(true);
+    if (ok.ok) expect(ok.value).toMatchObject({ row_key: 'low_ankle_sprain', f1_ir: null, f4_point: 1, source_rank: 4, n: null });
+    const bad = validateBaseRateInput({ row_key: 'x y', strength: 'firm', f2_next: 1.5, f4_point: 3, f4_low: 4, f4_high: 5, source_rank: 7 });
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) expect(bad.errors).toEqual(expect.arrayContaining([expect.stringContaining('row_key'), 'injury_type is required', expect.stringContaining('strength'), 'f2_next must be a probability from 0 to 1', 'F4 interval must satisfy low ≤ point ≤ high', expect.stringContaining('source_rank')]));
+  });
+});
