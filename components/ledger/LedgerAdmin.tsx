@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { LedgerBaseRate, LedgerDistributeOutcome, LedgerForecast } from '@/lib/ledger-types';
 import { LedgerDraftForm } from './LedgerDraftForm';
 import { LedgerPublishPreview } from './LedgerPublishPreview';
+import { BaseRateEditor } from './BaseRateEditor';
 
 interface Props {
   initialBaseRates: LedgerBaseRate[];
@@ -13,6 +14,7 @@ interface Props {
 
 type View =
   | { kind: 'list' }
+  | { kind: 'base-rates' }
   | { kind: 'new' }
   | { kind: 'edit'; draft: LedgerForecast }
   | { kind: 'revise'; latest: LedgerForecast }
@@ -25,6 +27,7 @@ const Badge = ({ on, label }: { on: boolean; label: string }) => (
 export function LedgerAdmin({ initialBaseRates, initialForecasts }: Props) {
   const router = useRouter();
   const [forecasts, setForecasts] = useState(initialForecasts);
+  const [baseRates, setBaseRates] = useState(initialBaseRates);
   const [view, setView] = useState<View>({ kind: 'list' });
   const [error, setError] = useState<string | null>(null);
 
@@ -50,7 +53,7 @@ export function LedgerAdmin({ initialBaseRates, initialForecasts }: Props) {
   if (view.kind === 'new' || view.kind === 'edit' || view.kind === 'revise') {
     return (
       <LedgerDraftForm
-        baseRates={initialBaseRates}
+        baseRates={baseRates}
         initial={view.kind === 'edit' ? view.draft : view.kind === 'revise' ? view.latest : null}
         parentEntryId={view.kind === 'revise' ? view.latest.entry_id : view.kind === 'edit' ? view.draft.entry_id : null}
         onPublished={(forecast, preview, previewError) => {
@@ -61,6 +64,16 @@ export function LedgerAdmin({ initialBaseRates, initialForecasts }: Props) {
           void reload();
           setView({ kind: 'list' });
         }}
+      />
+    );
+  }
+
+  if (view.kind === 'base-rates') {
+    return (
+      <BaseRateEditor
+        baseRates={baseRates}
+        onSaved={(row) => setBaseRates((rows) => [...rows.filter((r) => r.row_key !== row.row_key), row].sort((a, b) => a.injury_type.localeCompare(b.injury_type)))}
+        onClose={() => setView({ kind: 'list' })}
       />
     );
   }
@@ -82,11 +95,21 @@ export function LedgerAdmin({ initialBaseRates, initialForecasts }: Props) {
   return (
     <div className="space-y-8">
       {error && <p className="text-xs text-red-400">{error}</p>}
+      {baseRates.length === 0 && (
+        <p className="rounded border border-amber-800 bg-amber-950/40 p-3 text-xs text-amber-200">
+          The base-rate sheet is empty. A draft needs a base-rate row (its key is copied onto the forecast), so enter at least the row for this injury type first.
+        </p>
+      )}
       <div className="flex items-center justify-between">
         <p className="text-xs text-slate-500">Forecasting is never automated. A draft becomes a forecast only when you confirm it; a published row is immutable and revisions are new rows with a public trigger.</p>
-        <button onClick={() => setView({ kind: 'new' })} className="px-4 py-2 rounded-lg bg-emerald-700 text-emerald-50 text-sm font-semibold hover:bg-emerald-600 whitespace-nowrap">
-          New entry
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setView({ kind: 'base-rates' })} className="px-4 py-2 rounded-lg bg-slate-800 text-slate-200 text-sm hover:bg-slate-700 whitespace-nowrap">
+            Base rates · {baseRates.length}
+          </button>
+          <button onClick={() => setView({ kind: 'new' })} className="px-4 py-2 rounded-lg bg-emerald-700 text-emerald-50 text-sm font-semibold hover:bg-emerald-600 whitespace-nowrap">
+            New entry
+          </button>
+        </div>
       </div>
 
       <section className="space-y-3">
