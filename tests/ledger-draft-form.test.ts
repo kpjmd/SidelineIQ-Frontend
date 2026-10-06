@@ -39,6 +39,31 @@ describe('validateDraftInput', () => {
     }
   });
 
+  it('an EMPTY required probability is missing, never 0 (the PT-2026-001 defect)', () => {
+    const v = validateDraftInput({ ...good, f1_ir: '', f2_next: '  ', f3_4wk: '', f4_point: '' }, false);
+    expect(v.ok).toBe(false);
+    if (!v.ok) {
+      expect(v.errors).toEqual(expect.arrayContaining([
+        'f1_ir must be a probability from 0 to 1',
+        'f2_next must be a probability from 0 to 1',
+        'f3_4wk must be a probability from 0 to 1',
+        expect.stringContaining('f4_point, f4_low and f4_high'),
+      ]));
+    }
+    const zero = validateDraftInput({ ...good, f1_ir: '0' }, false);
+    expect(zero.ok && zero.value.f1_ir).toBe(0);
+  });
+
+  it('forecastWarnings flags certainties and a zero-width interval without blocking', async () => {
+    const { forecastWarnings } = await import('../lib/ledger-draft-form');
+    expect(forecastWarnings({ f1_ir: '0.0000', f2_next: '0.1200', f3_4wk: '1', f5_reinjury: null, f4_low: 2, f4_high: 2, base_rate_strength: 'moderate' })).toEqual([
+      expect.stringContaining('F1 is 0%'),
+      expect.stringContaining('F3 is 100%'),
+      expect.stringContaining('zero width'),
+    ]);
+    expect(forecastWarnings({ f1_ir: '0.18', f2_next: '0.12', f3_4wk: '0.61', f5_reinjury: '0.22', f4_low: 2, f4_high: 5, base_rate_strength: 'moderate' })).toEqual([]);
+  });
+
   it('an empty F5 is the concussion rule, not an error', () => {
     const v = validateDraftInput({ ...good, f5_reinjury: '' }, false);
     expect(v.ok && v.value.f5_reinjury).toBeNull();

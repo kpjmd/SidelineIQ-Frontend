@@ -29,11 +29,17 @@ export function tweetIdFromUrl(url: string | null | undefined): string | null {
 export type DraftValidation = { ok: true; value: LedgerDraftInput } | { ok: false; errors: string[] };
 
 const str = (v: unknown): string | null => (typeof v === 'string' && v.trim().length > 0 ? v.trim() : null);
+// An EMPTY string is "not entered", never 0: Number('') is 0, and the first
+// live draft (PT-2026-001) published F1, F2, F3 and F5 as 0.0000 because four
+// untouched inputs coerced that way and passed the range check. A number the
+// physician did not type is not a forecast.
 const prob = (v: unknown): number | null => {
+  if (typeof v === 'string' && v.trim() === '') return null;
   const n = typeof v === 'string' ? Number(v) : v;
   return typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= 1 ? n : null;
 };
 const games = (v: unknown): number | null => {
+  if (typeof v === 'string' && v.trim() === '') return null;
   const n = typeof v === 'string' ? Number(v) : v;
   return typeof n === 'number' && Number.isInteger(n) && n >= 0 ? n : null;
 };
@@ -120,6 +126,24 @@ export function validateDraftInput(body: unknown, isRevision: boolean): DraftVal
     entity_id: str(b.entity_id),
   };
   return { ok: true, value };
+}
+
+/**
+ * Soft warnings the confirm step shows beside the gate: a probability of exactly
+ * 0 or 1 is a certainty, which a reference-class forecast almost never is, and
+ * an F4 interval of zero width is not an 80% interval. None of these block the
+ * publish; they make the physician look twice before signing.
+ */
+export function forecastWarnings(row: Pick<LedgerForecast, 'f1_ir' | 'f2_next' | 'f3_4wk' | 'f5_reinjury' | 'f4_low' | 'f4_high' | 'base_rate_strength'>): string[] {
+  const warnings: string[] = [];
+  for (const [k, v] of [['F1', row.f1_ir], ['F2', row.f2_next], ['F3', row.f3_4wk], ['F5', row.f5_reinjury]] as const) {
+    if (v === null || v === undefined) continue;
+    const n = Number(v);
+    if (n === 0 || n === 1) warnings.push(`${k} is ${n === 0 ? '0%' : '100%'} — a certainty, not a reference-class estimate; confirm this is intended`);
+  }
+  if (Number(row.f4_low) === Number(row.f4_high)) warnings.push('F4 interval has zero width; an 80% interval should admit uncertainty');
+  if (row.base_rate_strength === 'thin' && Number(row.f4_high) - Number(row.f4_low) < 2) warnings.push('a thin base-rate row calls for a widened F4 interval (spec: at least twice a strong row\'s)');
+  return warnings;
 }
 
 /** The prose fields the vocabulary rule governs (never the fixed strip). */
