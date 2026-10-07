@@ -110,15 +110,19 @@ export default async function Image({ params }: { params: Promise<{ entryId: str
           <div style={{ display: 'flex', fontSize: 19, color: BRAND_COLORS.bodySecondary }}>{card.whatMovesThis}</div>
         </div>
 
-        {/* Credit row + provenance */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 6 }}>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {/* Credit row + provenance. The provenance never wraps: a hash8 split
+            across two lines on the first live card is what this fixes. The
+            credit column shrinks and wraps instead. */}
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, marginTop: 6 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, flexShrink: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', fontSize: 20, fontWeight: 700 }}>{card.credit}</div>
-            <div style={{ display: 'flex', fontSize: 15, color: BRAND_COLORS.mutedLabel }}>
+            <div style={{ display: 'flex', fontSize: 14, lineHeight: 1.3, color: BRAND_COLORS.mutedLabel }}>
               {card.publisher} · {card.aiDisclosure}
             </div>
           </div>
-          <div style={{ display: 'flex', fontFamily: 'IBM Plex Mono', fontSize: 20, letterSpacing: 1.6, color: BRAND_COLORS.monoMeta }}>{card.provenance}</div>
+          <div style={{ display: 'flex', flexShrink: 0, whiteSpace: 'nowrap', fontFamily: 'IBM Plex Mono', fontSize: 20, letterSpacing: 1.4, color: BRAND_COLORS.monoMeta }}>
+            {card.provenance}
+          </div>
         </div>
 
         {/* Disclaimer strip, full width, part of the frame */}
