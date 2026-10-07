@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { LedgerDistributeOutcome, LedgerForecast } from '@/lib/ledger-types';
+import { xCardHeading } from '@/lib/ledger-x-heading';
 
 interface Props {
   forecast: LedgerForecast;
@@ -109,7 +110,7 @@ export function LedgerPublishPreview({ forecast, initialPreview, initialPreviewE
 
           <section className="rounded-lg border border-slate-800 bg-slate-900/60 p-4 space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-mono text-slate-400">X CARD REPLY{outcome.x.reply_to_id ? ` · replying to ${outcome.x.reply_to_id}` : ' · standalone'}</span>
+              <span className="font-mono text-slate-400">{xCardHeading(outcome)}</span>
               <span className={statusTone(outcome.x.status)}>{outcome.x.status}{outcome.x.post_id ? ` · ${outcome.x.post_id}` : ''}{outcome.x.error ? ` — ${outcome.x.error}` : ''}</span>
             </div>
             <pre className="whitespace-pre-wrap rounded bg-slate-950 p-3 text-sm text-bone">{outcome.x.text}</pre>
@@ -143,7 +144,7 @@ export function LedgerPublishPreview({ forecast, initialPreview, initialPreviewE
       <div className="border-t border-slate-800 pt-4 space-y-3">
         <label className="flex items-center gap-2 text-xs text-slate-400">
           <input type="checkbox" checked={forceStandalone} onChange={(e) => setForceStandalone(e.target.checked)} className="accent-amber-500" />
-          Post standalone if the reply target URL cannot be parsed (reply_to_url is frozen on the row)
+          Skip the reply; post the card standalone. Not needed when X refuses the reply (that falls back on its own); required if reply_to_url cannot be parsed (it is frozen on the row)
         </label>
         <div className="flex items-center gap-3">
           <button onClick={() => distribute(false)} disabled={busy} className="px-4 py-3 rounded-lg bg-emerald-700 text-emerald-50 font-bold text-sm hover:bg-emerald-600 disabled:opacity-50 ring-1 ring-emerald-500/40">

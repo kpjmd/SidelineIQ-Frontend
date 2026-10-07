@@ -203,6 +203,8 @@ export interface LedgerDistributeOutcome {
   commit: { path: string; message: string; status: string; sha?: string; url?: string; body?: string; error?: string };
   x: { text: string; reply_to_id: string | null; status: string; post_id?: string; error?: string };
   x_self_reply: { text: string; status: string; id?: string; error?: string };
+  /** Present when the card posted standalone although the row names a report post (agents PR #74). */
+  standalone?: { reason: 'force_standalone' | 'reply_refused'; report_url: string; audited: boolean; prior_error?: string; error?: string };
   farcaster: { text: string; embeds: Array<{ url: string }>; channel_id: string | null; byte_length: number; status: string; hash?: string; error?: string };
   provenance: { recorded: boolean; error?: string };
   warnings: string[];
