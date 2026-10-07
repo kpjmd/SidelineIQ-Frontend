@@ -38,6 +38,7 @@ export default async function LedgerRepliesPage() {
           </div>
           <nav className="flex items-center gap-4 text-xs text-slate-500">
             <Link href="/admin/ledger" className="hover:text-slate-300">Ledger</Link>
+            <Link href="/admin/ledger/resolutions" className="hover:text-slate-300">Resolutions</Link>
             <Link href="/admin" className="hover:text-slate-300">MD review</Link>
           </nav>
         </div>
