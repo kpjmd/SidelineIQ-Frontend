@@ -1,28 +1,30 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/auth';
-import { listLedgerBaseRates, listLedgerEntries } from '@/lib/mcp';
-import { LedgerAdmin } from '@/components/ledger/LedgerAdmin';
+import { listLedgerEntries, listLedgerProposals, listLedgerResolutions } from '@/lib/mcp';
+import { ResolutionQueue } from '@/components/ledger/ResolutionQueue';
 import { Mark } from '@/components/shared/Mark';
 import { Wordmark } from '@/components/shared/Wordmark';
-import type { LedgerBaseRate, LedgerForecast } from '@/lib/ledger-types';
+import type { LedgerForecast, LedgerProposal, LedgerResolution } from '@/lib/ledger-types';
 
-// proxy.ts gates /admin/* on having a session; the md role is enforced here
-// too, as app/admin/page.tsx does. Read the session once, preload the two
-// lists, hand off to the client shell. No secret reaches the browser.
-export default async function LedgerAdminPage() {
+export default async function LedgerResolutionsPage() {
   const session = await auth();
   if (!session?.user) redirect('/signin');
   if (session.user.role !== 'md') redirect('/signin');
 
-  let baseRates: LedgerBaseRate[] = [];
+  let proposals: LedgerProposal[] = [];
+  let resolutions: LedgerResolution[] = [];
   let forecasts: LedgerForecast[] = [];
   let loadError: string | null = null;
   try {
-    [baseRates, forecasts] = await Promise.all([listLedgerBaseRates(), listLedgerEntries({ include_drafts: true, limit: 200 })]);
+    [proposals, resolutions, forecasts] = await Promise.all([
+      listLedgerProposals({ decision: 'pending' }),
+      listLedgerResolutions({}),
+      listLedgerEntries({ limit: 200 }),
+    ]);
   } catch (err) {
-    console.error('ledger admin load error:', err);
-    loadError = err instanceof Error ? err.message : 'Failed to load the ledger';
+    console.error('ledger resolutions load error:', err);
+    loadError = err instanceof Error ? err.message : 'Failed to load resolutions';
   }
 
   return (
@@ -35,19 +37,18 @@ export default async function LedgerAdminPage() {
               <Wordmark className="text-xl" />
             </Link>
             <span className="text-slate-700">·</span>
-            <span className="font-mono text-xs tracking-[0.14em] text-slate-400">PROGNOSIS LEDGER</span>
+            <span className="font-mono text-xs tracking-[0.14em] text-slate-400">RESOLUTIONS</span>
           </div>
           <nav className="flex items-center gap-4 text-xs text-slate-500">
-            <Link href="/admin" className="hover:text-slate-300">MD review</Link>
-            <Link href="/admin/ledger/resolutions" className="hover:text-slate-300">Resolutions</Link>
+            <Link href="/admin/ledger" className="hover:text-slate-300">Ledger</Link>
             <Link href="/admin/ledger/replies" className="hover:text-slate-300">Replies</Link>
-            <Link href="/ledger" className="hover:text-slate-300">Public ledger</Link>
+            <Link href="/admin" className="hover:text-slate-300">MD review</Link>
           </nav>
         </div>
       </header>
       <main className="max-w-4xl mx-auto px-4 py-8">
         {loadError && <p className="mb-4 text-xs text-red-400">{loadError}</p>}
-        <LedgerAdmin initialBaseRates={baseRates} initialForecasts={forecasts} />
+        <ResolutionQueue initialProposals={proposals} initialResolutions={resolutions} initialForecasts={forecasts} />
       </main>
     </div>
   );
