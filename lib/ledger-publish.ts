@@ -8,7 +8,7 @@
  * proposal) from the database by id; a body with text in it would be content
  * going out that no record confirmed.
  */
-import type { LedgerDistributeOutcome, NflverseLookup } from './ledger-types';
+import type { LedgerDistributeOutcome, LedgerIngestSummary, LedgerScoreboardResponse, NflverseLookup } from './ledger-types';
 
 const TIMEOUT_MS = 60_000;
 
@@ -85,4 +85,19 @@ export function triggerReplyPost(proposalId: string): Promise<AgentsCall<ReplyPo
 /** GET /admin/ledger/nflverse-ids?espn_id= — "unresolved" is an answer; a non-ok call is not. */
 export function lookupNflverseIds(espnId: string): Promise<AgentsCall<{ success: boolean; lookup: NflverseLookup }>> {
   return callAgents(`/admin/ledger/nflverse-ids?espn_id=${encodeURIComponent(espnId)}`, { method: 'GET' });
+}
+
+/**
+ * POST /admin/ledger/ingest, always as a SHADOW pass from this site: the agents
+ * read every source and return what they would propose, and file nothing. The
+ * scheduled loop is the only thing that files proposals, and only in `on`.
+ */
+export function triggerLedgerIngestShadow(): Promise<AgentsCall<LedgerIngestSummary>> {
+  return callAgents<LedgerIngestSummary>('/admin/ledger/ingest', { method: 'POST', body: { mode: 'shadow' } });
+}
+
+/** GET /admin/ledger/scoreboard — both boards, the card line, and the two card texts. */
+export function fetchLedgerScoreboard(since: string | null): Promise<AgentsCall<LedgerScoreboardResponse>> {
+  const q = since ? `?since=${encodeURIComponent(since)}` : '';
+  return callAgents<LedgerScoreboardResponse>(`/admin/ledger/scoreboard${q}`, { method: 'GET' });
 }

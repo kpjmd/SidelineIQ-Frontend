@@ -32,10 +32,14 @@ import type {
 import { listAllThreadPages, type ThreadFilters, type ThreadPage } from './thread-paging';
 import type {
   LedgerBaseRate,
+  LedgerCorrection,
   LedgerDraftInput,
   LedgerEntryDetail,
   LedgerForecast,
+  LedgerLinkageResult,
+  LedgerProposal,
   LedgerPublishResult,
+  LedgerResolution,
   ReplyProposal,
 } from './ledger-types';
 import type { CtaClickSummary, ManualMetric, MetricSnapshot } from './metrics-summary';
@@ -585,6 +589,60 @@ export async function decideReply(input: {
 }): Promise<ReplyProposal> {
   const result = await callMCPTool<{ proposal: ReplyProposal }>('web_decide_reply', defined({ ...input }));
   return result.proposal;
+}
+
+// ── Stage 3: resolutions, corrections, linkage ─────────────────────────
+
+/** Proposals the ingest filed. `decision` null lists pending (the mcp default). */
+export async function listLedgerProposals(opts: { decision?: LedgerProposal['decision'] | null; entry_id?: string | null } = {}): Promise<LedgerProposal[]> {
+  const result = await callMCPTool<{ proposals: LedgerProposal[] }>('web_list_ledger_proposals', defined({ ...opts }));
+  return result.proposals;
+}
+
+export async function listLedgerResolutions(opts: { entry_id?: string | null; status?: LedgerResolution['status'] | null } = {}): Promise<LedgerResolution[]> {
+  const result = await callMCPTool<{ resolutions: LedgerResolution[] }>('web_list_ledger_resolutions', defined({ ...opts }));
+  return result.resolutions;
+}
+
+/**
+ * THE RESOLUTION CONFIRMATION. Confirm locks the resolution row (it is never
+ * revised) and records who and when; reject leaves the field open. The mcp
+ * re-derives the role from the users table.
+ */
+export async function decideLedgerProposal(input: {
+  proposal_id: string;
+  reviewer_user_id: string;
+  decision: 'confirmed' | 'rejected';
+  note?: string | null;
+}): Promise<{ proposal: LedgerProposal; resolution: LedgerResolution | null }> {
+  return callMCPTool<{ proposal: LedgerProposal; resolution: LedgerResolution | null }>('web_decide_ledger_proposal', defined({ ...input }));
+}
+
+/** Append-only clerical correction; never edits a forecast row. */
+export async function recordLedgerCorrection(input: {
+  entry_id: string;
+  field: string;
+  old_value?: string | null;
+  new_value?: string | null;
+  note: string;
+  corrected_by: string;
+}): Promise<LedgerCorrection> {
+  const result = await callMCPTool<{ correction: LedgerCorrection }>('web_record_ledger_correction', defined({ ...input }));
+  return result.correction;
+}
+
+/** 028: set-once linkage ids on every published version; files a correction row too. */
+export async function recordLedgerLinkage(input: {
+  entry_id: string;
+  reviewer_user_id: string;
+  espn_athlete_id: string;
+  gsis_id: string;
+  pfr_id: string;
+  nflverse_team?: string | null;
+  season?: number | null;
+  note?: string | null;
+}): Promise<LedgerLinkageResult> {
+  return callMCPTool<LedgerLinkageResult>('web_record_ledger_linkage', defined({ ...input }));
 }
 
 export interface PlayerResolution {

@@ -214,3 +214,73 @@ export interface LedgerDistributeOutcome {
 export type NflverseLookup =
   | { status: 'resolved'; espn_id: string; gsis_id: string; pfr_id: string; nflverse_team: string | null; display_name: string; position: string | null; source_fetched_at: string }
   | { status: 'unresolved'; espn_id: string; reason: 'no_row' | 'missing_ids'; missing: Array<'gsis_id' | 'pfr_id'>; partial: Record<string, string | null> | null; source_fetched_at: string };
+
+// ── Stage 3: resolution proposals, linkage, ingest, scoreboard ──────────
+
+/** mcp ledger_resolution_proposals row. The ingest files these; only the MD decides. */
+export interface LedgerProposal {
+  id: string;
+  entry_id: string;
+  field: LedgerFieldName;
+  proposed_status: 'resolved' | 'void';
+  proposed_outcome: string | number | null;
+  outcome_date: string | null;
+  freeze_at: string | null;
+  void_reason: string | null;
+  evidence_url: string | null;
+  evidence: {
+    urls?: string[];
+    note?: string;
+    game_ids?: string[];
+    sentence?: string;
+    ingest_version?: number;
+    basis?: { today?: string; team?: string; team_source?: string; season?: number; season_assumed?: boolean; pfr_id?: string | null; gsis_id?: string | null };
+  } | null;
+  proposer: string;
+  proposed_at: string;
+  decision: 'pending' | 'confirmed' | 'rejected';
+  decided_by: string | null;
+  decided_at: string | null;
+  note: string | null;
+}
+
+/** web_record_ledger_linkage result (mcp migration 028). */
+export interface LedgerLinkageResult {
+  forecasts: LedgerForecast[];
+  correction: LedgerCorrection | null;
+  changed: boolean;
+}
+
+/** agents POST /admin/ledger/ingest (src/ledger/ingest/loop.ts LedgerIngestSummary), the parts this page shows. */
+export interface LedgerIngestSummary {
+  success: boolean;
+  mode: 'off' | 'shadow' | 'on';
+  today: string | null;
+  entries: number;
+  entries_with_open: number;
+  open_fields: number;
+  proposed: number;
+  created: number;
+  duplicate: number;
+  field_locked: number;
+  rejected: number;
+  aborted: boolean;
+  abort_reason?: string;
+  proposals: Array<Omit<LedgerProposal, 'id' | 'proposer' | 'proposed_at' | 'decision' | 'decided_by' | 'decided_at' | 'note'> & { write: string }>;
+  held_fields: Array<{ entry_id: string; field: LedgerFieldName; status: 'open' | 'unresolvable'; reason: string; freeze_at: string | null }>;
+  contexts: Array<{ entry_id: string; team: string; team_source: string; season: number; season_assumed: boolean; pfr_id: string | null; gsis_id: string | null; open: string[] }>;
+  sources: Array<{ source: string; url: string; rows: number }>;
+  error?: string;
+}
+
+/** agents GET /admin/ledger/scoreboard. `summary` is lib/ledger-scoring.ts ScoreboardSummary. */
+export interface LedgerScoreboardResponse {
+  success: boolean;
+  since: string;
+  as_of: string;
+  summary: import('./ledger-scoring').ScoreboardSummary;
+  scoreboard_line: string | null;
+  resolution_card_text: string;
+  scoreboard_card_text: string;
+  error?: string;
+}
