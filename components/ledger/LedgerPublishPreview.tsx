@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { LedgerDistributeOutcome, LedgerForecast } from '@/lib/ledger-types';
-import { xCardHeading } from '@/lib/ledger-x-heading';
+import { isLedgerOnly, xCardHeading } from '@/lib/ledger-x-heading';
 
 interface Props {
   forecast: LedgerForecast;
@@ -57,6 +57,8 @@ export function LedgerPublishPreview({ forecast, initialPreview, initialPreviewE
 
   const hash8 = forecast.row_hash?.slice(0, 8) ?? '—';
   const live = outcome && !outcome.dry_run;
+  // Tier 2: commit + text-only Farcaster mirror, nothing to X (no card anywhere).
+  const ledgerOnly = outcome ? isLedgerOnly(outcome, forecast.tier) : forecast.tier === 2;
 
   return (
     <div className="space-y-5">
@@ -83,7 +85,11 @@ export function LedgerPublishPreview({ forecast, initialPreview, initialPreviewE
             </div>
           ) : (
             <div className={`rounded border p-3 text-xs ${outcome.mirrored ? 'border-emerald-800 bg-emerald-950/40 text-emerald-200' : 'border-red-800 bg-red-950/40 text-red-200'}`}>
-              {outcome.mirrored ? 'Committed and posted on every platform.' : 'Committed, but at least one platform failed. Re-run “Post and commit” to fill the gaps; recorded steps are not repeated.'}
+              {outcome.mirrored
+                ? ledgerOnly
+                  ? 'Committed and mirrored to Farcaster. Tier 2: nothing posted to X.'
+                  : 'Committed and posted on every platform.'
+                : 'Committed, but at least one platform failed. Re-run “Post and commit” to fill the gaps; recorded steps are not repeated.'}
             </div>
           )}
           {outcome.warnings.length > 0 && (
@@ -113,16 +119,22 @@ export function LedgerPublishPreview({ forecast, initialPreview, initialPreviewE
               <span className="font-mono text-slate-400">{xCardHeading(outcome)}</span>
               <span className={statusTone(outcome.x.status)}>{outcome.x.status}{outcome.x.post_id ? ` · ${outcome.x.post_id}` : ''}{outcome.x.error ? ` — ${outcome.x.error}` : ''}</span>
             </div>
-            <pre className="whitespace-pre-wrap rounded bg-slate-950 p-3 text-sm text-bone">{outcome.x.text}</pre>
+            {ledgerOnly ? (
+              <p className="text-xs text-slate-500">Not posted — Tier 2, ledger only. A card needs a new version at Tier 1.</p>
+            ) : (
+              <pre className="whitespace-pre-wrap rounded bg-slate-950 p-3 text-sm text-bone">{outcome.x.text}</pre>
+            )}
           </section>
 
-          <section className="rounded-lg border border-slate-800 bg-slate-900/60 p-4 space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-mono text-slate-400">X SELF-REPLY</span>
-              <span className={statusTone(outcome.x_self_reply.status)}>{outcome.x_self_reply.status}{outcome.x_self_reply.id ? ` · ${outcome.x_self_reply.id}` : ''}{outcome.x_self_reply.error ? ` — ${outcome.x_self_reply.error}` : ''}</span>
-            </div>
-            <pre className="whitespace-pre-wrap rounded bg-slate-950 p-3 text-sm text-bone">{outcome.x_self_reply.text}</pre>
-          </section>
+          {!ledgerOnly && (
+            <section className="rounded-lg border border-slate-800 bg-slate-900/60 p-4 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-mono text-slate-400">X SELF-REPLY</span>
+                <span className={statusTone(outcome.x_self_reply.status)}>{outcome.x_self_reply.status}{outcome.x_self_reply.id ? ` · ${outcome.x_self_reply.id}` : ''}{outcome.x_self_reply.error ? ` — ${outcome.x_self_reply.error}` : ''}</span>
+              </div>
+              <pre className="whitespace-pre-wrap rounded bg-slate-950 p-3 text-sm text-bone">{outcome.x_self_reply.text}</pre>
+            </section>
+          )}
 
           <section className="rounded-lg border border-slate-800 bg-slate-900/60 p-4 space-y-2">
             <div className="flex items-center justify-between text-xs">
@@ -130,7 +142,9 @@ export function LedgerPublishPreview({ forecast, initialPreview, initialPreviewE
               <span className={statusTone(outcome.farcaster.status)}>{outcome.farcaster.status}{outcome.farcaster.hash ? ` · ${outcome.farcaster.hash}` : ''}{outcome.farcaster.error ? ` — ${outcome.farcaster.error}` : ''}</span>
             </div>
             <pre className="whitespace-pre-wrap rounded bg-slate-950 p-3 text-sm text-bone">{outcome.farcaster.text}</pre>
-            <div className="text-xs text-slate-500">embed: {outcome.farcaster.embeds.map((e) => e.url).join(', ')}</div>
+            <div className="text-xs text-slate-500">
+              embed: {outcome.farcaster.embeds.length > 0 ? outcome.farcaster.embeds.map((e) => e.url).join(', ') : 'none (text only, no card unfurl)'}
+            </div>
           </section>
 
           {live && (
@@ -142,10 +156,12 @@ export function LedgerPublishPreview({ forecast, initialPreview, initialPreviewE
       )}
 
       <div className="border-t border-slate-800 pt-4 space-y-3">
+        {!ledgerOnly && (
         <label className="flex items-center gap-2 text-xs text-slate-400">
           <input type="checkbox" checked={forceStandalone} onChange={(e) => setForceStandalone(e.target.checked)} className="accent-amber-500" />
           Skip the reply; post the card standalone. Not needed when X refuses the reply (that falls back on its own); required if reply_to_url cannot be parsed (it is frozen on the row)
         </label>
+        )}
         <div className="flex items-center gap-3">
           <button onClick={() => distribute(false)} disabled={busy} className="px-4 py-3 rounded-lg bg-emerald-700 text-emerald-50 font-bold text-sm hover:bg-emerald-600 disabled:opacity-50 ring-1 ring-emerald-500/40">
             {busy ? 'Working…' : 'Post and commit'}

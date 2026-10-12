@@ -199,10 +199,13 @@ export interface LedgerDistributeOutcome {
   success: boolean;
   dry_run: boolean;
   mirrored: boolean;
+  /** The stored row's tier (agents PR #79). Tier 2 is ledger-only: commit + text-only Farcaster, no X. Absent from older agents. */
+  tier?: 1 | 2;
   forecast: { id: string; entry_id: string; version: number; row_hash: string };
   commit: { path: string; message: string; status: string; sha?: string; url?: string; body?: string; error?: string };
-  x: { text: string; reply_to_id: string | null; status: string; post_id?: string; error?: string };
-  x_self_reply: { text: string; status: string; id?: string; error?: string };
+  /** On Tier 2 both X steps are `skipped` with `reason` set. */
+  x: { text: string; reply_to_id: string | null; status: string; post_id?: string; error?: string; reason?: string };
+  x_self_reply: { text: string; status: string; id?: string; error?: string; reason?: string };
   /** Present when the card posted standalone although the row names a report post (agents PR #74). */
   standalone?: { reason: 'force_standalone' | 'reply_refused'; report_url: string; audited: boolean; prior_error?: string; error?: string };
   farcaster: { text: string; embeds: Array<{ url: string }>; channel_id: string | null; byte_length: number; status: string; hash?: string; error?: string };
