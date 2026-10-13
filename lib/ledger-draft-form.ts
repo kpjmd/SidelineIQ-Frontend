@@ -55,6 +55,12 @@ export function validateDraftInput(body: unknown, isRevision: boolean): DraftVal
   const player = need('player', str(b.player));
   const team = need('team', str(b.team));
   const position = need('position', str(b.position));
+  // Column widths in ledger_forecasts (mcp 026/029). Position is autofilled
+  // from players.position, so a long ESPN display name ("Inside Linebacker")
+  // must fail here, named, not as a database error inside the MCP call.
+  for (const [field, value, max] of [['player', player, 255], ['team', team, 64], ['position', position, 32]] as const) {
+    if (typeof value === 'string' && value.length > max) errors.push(`${field} is ${value.length} characters; the most it can hold is ${max}`);
+  }
   const injury_date = str(b.injury_date);
   if (!injury_date || !/^\d{4}-\d{2}-\d{2}$/.test(injury_date)) errors.push('injury_date must be YYYY-MM-DD (the day the injury occurred, not the report date)');
   const reported_injury = need('reported_injury', str(b.reported_injury));
