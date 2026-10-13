@@ -39,6 +39,18 @@ describe('validateDraftInput', () => {
     }
   });
 
+  it('bounds text fields to their column widths (an ILB autofills "Inside Linebacker", 17 chars)', () => {
+    expect(validateDraftInput({ ...good, position: 'Inside Linebacker' }, false).ok).toBe(true);
+    const v = validateDraftInput({ ...good, position: 'x'.repeat(33), team: 'x'.repeat(65) }, false);
+    expect(v.ok).toBe(false);
+    if (!v.ok) {
+      expect(v.errors).toEqual([
+        'team is 65 characters; the most it can hold is 64',
+        'position is 33 characters; the most it can hold is 32',
+      ]);
+    }
+  });
+
   it('an EMPTY required probability is missing, never 0 (the PT-2026-001 defect)', () => {
     const v = validateDraftInput({ ...good, f1_ir: '', f2_next: '  ', f3_4wk: '', f4_point: '' }, false);
     expect(v.ok).toBe(false);

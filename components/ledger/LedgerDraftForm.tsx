@@ -285,7 +285,7 @@ export function LedgerDraftForm({ baseRates, initial, parentEntryId, onPublished
         <div className="md:col-span-2">
           <label className={label}>Player</label>
           <div className="flex gap-2">
-            <input className={input} value={form.player} onChange={(e) => set('player', e.target.value)} placeholder="As the roster spells it" />
+            <input className={input} value={form.player} onChange={(e) => set('player', e.target.value)} maxLength={255} placeholder="As the roster spells it" />
             <button type="button" onClick={resolvePlayer} disabled={resolving} className="px-3 rounded bg-slate-800 text-xs text-slate-200 hover:bg-slate-700 disabled:opacity-50 whitespace-nowrap">
               {resolving ? 'Looking up…' : 'Resolve on roster'}
             </button>
@@ -302,11 +302,11 @@ export function LedgerDraftForm({ baseRates, initial, parentEntryId, onPublished
         </div>
         <div>
           <label className={label}>Team (as printed on the card)</label>
-          <input className={input} value={form.team} onChange={(e) => set('team', e.target.value)} />
+          <input className={input} value={form.team} onChange={(e) => set('team', e.target.value)} maxLength={64} />
         </div>
         <div>
           <label className={label}>Position</label>
-          <input className={input} value={form.position} onChange={(e) => set('position', e.target.value)} />
+          <input className={input} value={form.position} onChange={(e) => set('position', e.target.value)} maxLength={32} />
         </div>
         <div>
           <label className={label}>Injury date (the day it occurred, not the report)</label>
