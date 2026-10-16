@@ -126,6 +126,18 @@ export interface LedgerEntryDetail {
   proposals: unknown[];
 }
 
+/**
+ * web_export_ledger (Stage 4's one public read): published forecasts only,
+ * every resolution, every correction (linkage rows included), and NO
+ * proposals. Unpaged.
+ */
+export interface LedgerExport {
+  forecasts: LedgerForecast[];
+  resolutions: LedgerResolution[];
+  corrections: LedgerCorrection[];
+  exported_at: string;
+}
+
 export interface LedgerPublishGate {
   role_ok: boolean;
   passed: boolean;
