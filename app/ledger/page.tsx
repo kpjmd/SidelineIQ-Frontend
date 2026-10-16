@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { listLedgerEntries } from '@/lib/mcp';
+import { exportLedger } from '@/lib/mcp';
 import { BRAND_NAME } from '@/lib/brand';
 import { LEDGER_COPY } from '@/lib/ledger-copy';
 import { f4Label, injuryDateLabel, pct } from '@/lib/ledger-card';
-import { isPublishedForecast, type PublishedLedgerForecast } from '@/lib/ledger-types';
+import type { PublishedLedgerForecast } from '@/lib/ledger-types';
+import { entriesForRow, latestPerEntry, publicLedger, rowKeyOf, rowKeysWithEntries, statusCounts, type PublicLedger } from '@/lib/ledger-public';
 
 export const revalidate = 60;
 
@@ -14,25 +15,21 @@ export const metadata: Metadata = {
 };
 
 /**
- * The ledger index (S2-3: minimal now, Stage 4 adds the scoreboard, the
- * per-injury-type pages and the CSV export). Every row here is a published,
- * immutable forecast; the latest version of each entry is listed.
+ * The ledger index. Every row here is a published, immutable forecast; the
+ * latest version of each entry is listed, with how many of its five fields have
+ * resolved. Built from the public view (lib/ledger-public.ts), like every
+ * ledger page; the full disclaimer comes from app/ledger/layout.tsx.
  */
 export default async function LedgerIndexPage() {
-  let rows: PublishedLedgerForecast[] = [];
-  let loadError = false;
+  let ledger: PublicLedger | null = null;
   try {
-    rows = (await listLedgerEntries({ limit: 200 })).filter(isPublishedForecast);
+    ledger = publicLedger(await exportLedger());
   } catch (err) {
     console.error('ledger index load error:', err);
-    loadError = true;
   }
-  const latest = new Map<string, PublishedLedgerForecast>();
-  for (const r of rows) {
-    const prev = latest.get(r.entry_id);
-    if (!prev || prev.version < r.version) latest.set(r.entry_id, r);
-  }
-  const entries = [...latest.values()].sort((a, b) => (a.published_at < b.published_at ? 1 : -1));
+  const loadError = ledger === null;
+  const entries: PublishedLedgerForecast[] = ledger ? latestPerEntry(ledger) : [];
+  const types = ledger ? rowKeysWithEntries(ledger).map((k) => ({ key: k, n: entriesForRow(ledger!, k).length })) : [];
 
   return (
     <>
@@ -41,7 +38,15 @@ export default async function LedgerIndexPage() {
           <p>
             A public, timestamped record of NFL injury forecasts. Every entry carries five scored fields, an entry id, a version and a hash, and is committed to a public repository at publication. Revisions are new versions with a named public trigger; nothing is edited or deleted.
           </p>
-          <p className="text-xs text-slate-500">{LEDGER_COPY.ai_disclosure}</p>
+          <p className="text-xs">
+            <Link href="/ledger/scoreboard" className="text-signal-cyan hover:text-signal-cyan-hover">
+              Scoreboard
+            </Link>{' '}
+            ·{' '}
+            <a href="/ledger/export.csv" className="text-signal-cyan hover:text-signal-cyan-hover">
+              raw export (CSV)
+            </a>
+          </p>
         </div>
 
         <section className="space-y-3">
@@ -55,7 +60,7 @@ export default async function LedgerIndexPage() {
                     {e.player} · {e.position} · {e.team}
                   </div>
                   <div className="text-xs text-slate-500">
-                    Reported: {e.reported_injury} (tier {e.source_tier}) · injury {injuryDateLabel(e.injury_date)}
+                    Reported: {e.reported_injury} (tier {e.source_tier}) · injury {injuryDateLabel(e.injury_date)} · {rowKeyOf(ledger!, e.entry_id)}
                   </div>
                 </div>
                 <div className="text-right whitespace-nowrap">
@@ -63,6 +68,10 @@ export default async function LedgerIndexPage() {
                     {e.entry_id} · v{e.version} · {e.row_hash.slice(0, 8)}
                   </div>
                   <div className="text-xs text-slate-500">
+                    {(() => {
+                      const c = statusCounts(ledger!, e.entry_id);
+                      return `${c.resolved} resolved · ${c.void} void · ${c.open} open · `;
+                    })()}
                     IR {pct(e.f1_ir)} · next {pct(e.f2_next)} · 4 wk {pct(e.f3_4wk)} · missed {f4Label(e.f4_point, e.f4_low, e.f4_high)}
                   </div>
                 </div>
@@ -70,6 +79,22 @@ export default async function LedgerIndexPage() {
             </Link>
           ))}
         </section>
+
+        {types.length > 0 && (
+          <section className="space-y-2">
+            <h2 className="text-base font-semibold text-bone">By injury type</h2>
+            <ul className="text-xs font-mono flex flex-wrap gap-x-4 gap-y-1">
+              {types.map((t) => (
+                <li key={t.key}>
+                  <Link href={`/ledger/injury/${t.key}`} className="text-signal-cyan hover:text-signal-cyan-hover">
+                    {t.key}
+                  </Link>{' '}
+                  <span className="text-slate-500">({t.n})</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
     </>
   );
 }
