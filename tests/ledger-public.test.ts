@@ -6,7 +6,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   asOfParam, entriesForRow, isRowKey, latestPerEntry, linkageSummary, publicLedger, resolutionEvidence, rowKeyOf,
-  rowKeysWithEntries, scoringByField, statusCounts, summarizeFor, versionsOf, etDate, asOfLabel,
+  rowKeysWithEntries, scoringByField, statusCounts, summarizeFor, versionsOf, etDate, asOfLabel, monthlyBoardDates,
 } from '../lib/ledger-public';
 import type { LedgerExport } from '../lib/ledger-types';
 import fixture from './fixtures/ledger-csv-cases.json' with { type: 'json' };
@@ -107,5 +107,13 @@ describe('params', () => {
   it('etDate reads an instant on the New York calendar', () => {
     expect(etDate('2026-10-14T03:01:39.458Z')).toBe('2026-10-13');
     expect(etDate(null)).toBeNull();
+  });
+});
+
+describe('monthlyBoardDates', () => {
+  it('first Tuesdays from 2026-11-03 through today, newest first', () => {
+    expect(monthlyBoardDates('2026-11-02')).toEqual([]);
+    expect(monthlyBoardDates('2026-11-03')).toEqual(['2026-11-03']);
+    expect(monthlyBoardDates('2027-02-10')).toEqual(['2027-02-02', '2027-01-05', '2026-12-01', '2026-11-03']);
   });
 });

@@ -174,3 +174,23 @@ export function etDate(instant: string | null | undefined): string | null {
 export function asOfLabel(ledger: PublicLedger): string {
   return ledger.as_of ?? etDate(ledger.exported_at) ?? ledger.exported_at.slice(0, 10);
 }
+
+/**
+ * The monthly scoreboard dates (spec "Publication": the first Tuesday of each
+ * month) from the first one, 2026-11-03, through `today` (a New York date),
+ * newest first. Each is a permanent `?as_of=` view.
+ */
+export const FIRST_MONTHLY_BOARD = '2026-11-03';
+export function monthlyBoardDates(today: string): string[] {
+  const out: string[] = [];
+  let [y, m] = [Number(FIRST_MONTHLY_BOARD.slice(0, 4)), Number(FIRST_MONTHLY_BOARD.slice(5, 7))];
+  for (;;) {
+    const firstDow = new Date(Date.UTC(y, m - 1, 1)).getUTCDay();
+    const day = 1 + ((2 - firstDow + 7) % 7);
+    const d = `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    if (d > today) break;
+    out.push(d);
+    if (++m > 12) [y, m] = [y + 1, 1];
+  }
+  return out.reverse();
+}
