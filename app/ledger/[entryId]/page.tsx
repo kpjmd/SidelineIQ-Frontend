@@ -8,8 +8,6 @@ import { LEDGER_FIELDS, LEDGER_FIELD_SPECS } from '@/lib/ledger-fields';
 import { f4Label, injuryDateLabel, pct, TIER_COLORS } from '@/lib/ledger-card';
 import { isPublishedForecast, type LedgerEntryDetail, type PublishedLedgerForecast } from '@/lib/ledger-types';
 import { siteUrl as resolveSite } from '@/lib/site-url';
-import { Mark } from '@/components/shared/Mark';
-import { Wordmark } from '@/components/shared/Wordmark';
 
 export const revalidate = 60;
 
@@ -66,19 +64,7 @@ export default async function LedgerEntryPage({ params }: PageProps) {
   const tier = TIER_COLORS[latest.source_tier];
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      <header className="border-b border-slate-800">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <Mark size={28} />
-            <Wordmark className="text-xl" />
-          </Link>
-          <Link href="/ledger" className="font-mono text-xs tracking-[0.14em] text-slate-400 hover:text-slate-200">
-            PROGNOSIS LEDGER
-          </Link>
-        </div>
-      </header>
-      <main className="max-w-3xl mx-auto px-4 py-10 space-y-8 text-sm text-slate-300">
+    <>
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <span className="font-mono text-xs px-2 py-0.5 rounded" style={{ background: tier.fill, color: tier.ink }}>
@@ -189,13 +175,6 @@ export default async function LedgerEntryPage({ params }: PageProps) {
             </ul>
           )}
         </section>
-
-        <footer className="border-t border-slate-800 pt-6 space-y-2 text-xs text-slate-500">
-          <p>{LEDGER_COPY.ai_disclosure}</p>
-          <p>{LEDGER_COPY.full_disclaimer}</p>
-          <p>{LEDGER_COPY.reliance}</p>
-        </footer>
-      </main>
-    </div>
+    </>
   );
 }

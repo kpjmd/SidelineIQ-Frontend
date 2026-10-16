@@ -3,8 +3,6 @@ import Link from 'next/link';
 import { listLedgerEntries } from '@/lib/mcp';
 import { BRAND_NAME } from '@/lib/brand';
 import { LEDGER_COPY } from '@/lib/ledger-copy';
-import { Mark } from '@/components/shared/Mark';
-import { Wordmark } from '@/components/shared/Wordmark';
 import { f4Label, injuryDateLabel, pct } from '@/lib/ledger-card';
 import { isPublishedForecast, type PublishedLedgerForecast } from '@/lib/ledger-types';
 
@@ -37,17 +35,7 @@ export default async function LedgerIndexPage() {
   const entries = [...latest.values()].sort((a, b) => (a.published_at < b.published_at ? 1 : -1));
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      <header className="border-b border-slate-800">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <Mark size={28} />
-            <Wordmark className="text-xl" />
-          </Link>
-          <span className="font-mono text-xs tracking-[0.14em] text-slate-400">PROGNOSIS LEDGER</span>
-        </div>
-      </header>
-      <main className="max-w-3xl mx-auto px-4 py-10 space-y-8 text-sm text-slate-300">
+    <>
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-bone">Prognosis Ledger</h1>
           <p>
@@ -82,12 +70,6 @@ export default async function LedgerIndexPage() {
             </Link>
           ))}
         </section>
-
-        <footer className="border-t border-slate-800 pt-6 space-y-2 text-xs text-slate-500">
-          <p>{LEDGER_COPY.full_disclaimer}</p>
-          <p>{LEDGER_COPY.reliance}</p>
-        </footer>
-      </main>
-    </div>
+    </>
   );
 }
