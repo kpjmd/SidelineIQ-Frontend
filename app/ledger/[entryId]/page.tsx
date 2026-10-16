@@ -1,15 +1,15 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getLedgerEntry } from '@/lib/mcp';
+import { exportLedger } from '@/lib/mcp';
 import { BRAND_NAME } from '@/lib/brand';
 import { LEDGER_COPY } from '@/lib/ledger-copy';
 import { LEDGER_FIELDS, LEDGER_FIELD_SPECS } from '@/lib/ledger-fields';
 import { f4Label, injuryDateLabel, pct, TIER_COLORS } from '@/lib/ledger-card';
-import { isPublishedForecast, type LedgerEntryDetail, type PublishedLedgerForecast } from '@/lib/ledger-types';
+import type { PublishedLedgerForecast } from '@/lib/ledger-types';
+import { outcomeLabel } from '@/lib/ledger-resolutions';
+import { etDate, linkageSummary, publicLedger, resolutionEvidence, scoringByField, versionsOf, type PublicLedger } from '@/lib/ledger-public';
 import { siteUrl as resolveSite } from '@/lib/site-url';
-import { Mark } from '@/components/shared/Mark';
-import { Wordmark } from '@/components/shared/Wordmark';
 
 export const revalidate = 60;
 
@@ -19,14 +19,18 @@ interface PageProps {
   params: Promise<{ entryId: string }>;
 }
 
-async function load(entryId: string): Promise<{ detail: LedgerEntryDetail; versions: PublishedLedgerForecast[] } | null> {
+async function load(entryId: string): Promise<{ ledger: PublicLedger; versions: PublishedLedgerForecast[] } | null> {
   if (!ENTRY_ID_RE.test(entryId)) return null;
-  const detail = await getLedgerEntry(entryId);
-  if (!detail) return null;
-  const versions = detail.versions.filter(isPublishedForecast).sort((a, b) => a.version - b.version);
+  // The whole public ledger, not web_get_ledger_entry: that tool also returns
+  // the entry's proposals, pending ones included, and nothing public reads them.
+  const ledger = publicLedger(await exportLedger());
+  const versions = versionsOf(ledger, entryId);
   if (versions.length === 0) return null;
-  return { detail, versions };
+  return { ledger, versions };
 }
+
+const etTime = (iso: string) =>
+  `${new Date(iso).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })} ET`;
 
 function fieldLine(v: PublishedLedgerForecast): string {
   const f5 = v.f5_reinjury == null ? 'n/a' : pct(v.f5_reinjury);
@@ -53,32 +57,25 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 /**
  * One permanent URL per entry (spec "Public site"): every version, the five
- * resolutions, corrections, the commit and the social posts, and the full
- * disclaimer. Minimal in Stage 2 (S2-3); Stage 4 adds evidence links per
- * resolution and the per-injury-type and scoreboard pages.
+ * resolutions with their evidence, which version each resolved field is scored
+ * on, corrections (linkage rows included), the commit and the social posts. The
+ * full disclaimer comes from app/ledger/layout.tsx. Built from the public view
+ * (lib/ledger-public.ts): no draft and no proposal can reach this page.
  */
 export default async function LedgerEntryPage({ params }: PageProps) {
   const { entryId } = await params;
   const loaded = await load(entryId);
   if (!loaded) notFound();
-  const { detail, versions } = loaded;
+  const { ledger, versions } = loaded;
   const latest = versions[versions.length - 1];
+  const resolutions = ledger.resolutions.filter((r) => r.entry_id === latest.entry_id);
+  const corrections = ledger.corrections.filter((c) => c.entry_id === latest.entry_id);
+  const scoring = scoringByField(ledger, latest.entry_id);
+  const rowKey = versions[0].base_rate_row;
   const tier = TIER_COLORS[latest.source_tier];
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      <header className="border-b border-slate-800">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <Mark size={28} />
-            <Wordmark className="text-xl" />
-          </Link>
-          <Link href="/ledger" className="font-mono text-xs tracking-[0.14em] text-slate-400 hover:text-slate-200">
-            PROGNOSIS LEDGER
-          </Link>
-        </div>
-      </header>
-      <main className="max-w-3xl mx-auto px-4 py-10 space-y-8 text-sm text-slate-300">
+    <>
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <span className="font-mono text-xs px-2 py-0.5 rounded" style={{ background: tier.fill, color: tier.ink }}>
@@ -119,9 +116,19 @@ export default async function LedgerEntryPage({ params }: PageProps) {
                       X
                     </a>
                   )}
+                  {v.x_self_reply_id && (
+                    <a href={`https://x.com/i/web/status/${v.x_self_reply_id}`} className="text-signal-cyan hover:text-signal-cyan-hover" rel="noopener noreferrer" target="_blank">
+                      X self-reply
+                    </a>
+                  )}
                   {v.farcaster_hash && (
                     <a href={`https://warpcast.com/~/conversations/${v.farcaster_hash}`} className="text-signal-cyan hover:text-signal-cyan-hover" rel="noopener noreferrer" target="_blank">
                       Farcaster
+                    </a>
+                  )}
+                  {v.reply_to_url && (
+                    <a href={v.reply_to_url} className="text-signal-cyan hover:text-signal-cyan-hover" rel="noopener noreferrer" target="_blank">
+                      report
                     </a>
                   )}
                 </span>
@@ -145,7 +152,11 @@ export default async function LedgerEntryPage({ params }: PageProps) {
               {v.season_ending && <p className="text-xs text-amber-300">Season-ending flag set.</p>}
               <p className="text-xs text-slate-400">What would move this: {v.what_moves_this}</p>
               <p className="text-xs text-slate-500">
-                Base rate: {v.base_rate_row} ({v.base_rate_strength}) · sources:{' '}
+                Base rate:{' '}
+                <Link href={`/ledger/injury/${v.base_rate_row}`} className="text-signal-cyan hover:text-signal-cyan-hover">
+                  {v.base_rate_row}
+                </Link>{' '}
+                ({v.base_rate_strength}) · sources:{' '}
                 {v.source_urls.map((u, i) => (
                   <a key={i} href={u} className="text-signal-cyan hover:text-signal-cyan-hover" rel="noopener noreferrer" target="_blank">
                     [{i + 1}]
@@ -158,44 +169,88 @@ export default async function LedgerEntryPage({ params }: PageProps) {
 
         <section className="space-y-2">
           <h2 className="text-base font-semibold text-bone">Resolutions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-2 text-xs">
+          <p className="text-xs text-slate-500">
+            Each field resolves on its own from public records, is proposed by the ingest, and is locked only once the physician confirms it. A revision counts for a field only if it was published before that field&rsquo;s freeze point. Scored on the{' '}
+            <Link href="/ledger/scoreboard" className="text-signal-cyan hover:text-signal-cyan-hover">
+              scoreboard
+            </Link>
+            {rowKey && (
+              <>
+                {' '}and the{' '}
+                <Link href={`/ledger/injury/${rowKey}`} className="text-signal-cyan hover:text-signal-cyan-hover">
+                  {rowKey}
+                </Link>{' '}
+                page
+              </>
+            )}
+            .
+          </p>
+          <ul className="space-y-2 text-xs">
             {LEDGER_FIELDS.map((f) => {
-              const r = detail.resolutions.find((x) => x.field === f);
+              const r = resolutions.find((x) => x.field === f);
               const status = r?.status ?? 'open';
+              const ev = r && status !== 'open' ? resolutionEvidence(r) : null;
+              const sc = scoring[f];
               return (
-                <div key={f} className="rounded border border-slate-800 bg-slate-950 p-2">
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500">{f}</div>
-                  <div className={status === 'resolved' ? 'text-emerald-300' : status === 'void' ? 'text-amber-300' : 'text-slate-400'}>
-                    {status}
-                    {status === 'resolved' && r?.outcome != null ? ` · ${String(r.outcome)}` : ''}
-                    {status === 'void' && r?.void_reason ? ` · ${r.void_reason}` : ''}
+                <li key={f} className="rounded border border-slate-800 bg-slate-950 p-3 space-y-1">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <span className="text-slate-400">
+                      {f} · {LEDGER_FIELD_SPECS[f].label}
+                    </span>
+                    <span className={status === 'resolved' ? 'text-emerald-300' : status === 'void' ? 'text-amber-300' : 'text-slate-400'}>
+                      {status === 'resolved' && r ? `${outcomeLabel(f, r.outcome)}${r.outcome_date ? ` · ${r.outcome_date.slice(0, 10)}` : ''}` : status === 'void' ? `void · ${r?.void_reason ?? 'no reason recorded'}` : 'open'}
+                    </span>
                   </div>
-                  {r?.evidence_url && (
-                    <a href={r.evidence_url} className="text-signal-cyan hover:text-signal-cyan-hover" rel="noopener noreferrer" target="_blank">
-                      evidence
-                    </a>
+                  {r && status !== 'open' && (
+                    <div className="font-mono text-slate-500">
+                      {r.freeze_at && <>froze {etTime(r.freeze_at)} · </>}
+                      {r.confirmed_at && <>confirmed {etDate(r.confirmed_at)}</>}
+                      {sc?.latest_version !== undefined && <> · scored: initial v1, latest v{sc.latest_version}</>}
+                      {sc?.excluded && <> · not scored: {sc.excluded}</>}
+                    </div>
                   )}
-                </div>
+                  {ev?.sentence && <blockquote className="border-l-2 border-slate-700 pl-2 text-slate-400">&ldquo;{ev.sentence}&rdquo;</blockquote>}
+                  {ev?.note && <div className="text-slate-500">{ev.note}</div>}
+                  {ev && ev.urls.length > 0 && (
+                    <div className="flex flex-wrap gap-3">
+                      {ev.urls.map((u, i) => (
+                        <a key={u} href={u} className="text-signal-cyan hover:text-signal-cyan-hover" rel="noopener noreferrer" target="_blank">
+                          evidence{ev.urls.length > 1 ? ` [${i + 1}]` : ''}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </li>
               );
             })}
-          </div>
-          {detail.corrections.length > 0 && (
-            <ul className="text-xs text-slate-400 list-disc list-inside">
-              {detail.corrections.map((c) => (
-                <li key={c.id}>
-                  Correction ({new Date(c.corrected_at).toUTCString()}): {c.field} {c.old_value ?? '—'} → {c.new_value ?? '—'}. {c.note}
-                </li>
-              ))}
+          </ul>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold text-bone">Corrections</h2>
+          {corrections.length === 0 ? (
+            <p className="text-xs text-slate-500">None. Clerical corrections are logged here as separate rows; a forecast row is never edited.</p>
+          ) : (
+            <ul className="text-xs text-slate-400 space-y-1">
+              {corrections.map((c) => {
+                const linkage = linkageSummary(c);
+                return (
+                  <li key={c.id}>
+                    <span className="font-mono text-slate-500">{etDate(c.corrected_at)}</span>{' '}
+                    {linkage ? (
+                      <>Linkage ids attached: {linkage}. Not part of the row hash.</>
+                    ) : (
+                      <>
+                        {c.field}: {c.old_value ?? '—'} → {c.new_value ?? '—'}.
+                      </>
+                    )}{' '}
+                    {c.note}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>
-
-        <footer className="border-t border-slate-800 pt-6 space-y-2 text-xs text-slate-500">
-          <p>{LEDGER_COPY.ai_disclosure}</p>
-          <p>{LEDGER_COPY.full_disclaimer}</p>
-          <p>{LEDGER_COPY.reliance}</p>
-        </footer>
-      </main>
-    </div>
+    </>
   );
 }

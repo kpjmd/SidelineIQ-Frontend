@@ -35,6 +35,7 @@ import type {
   LedgerCorrection,
   LedgerDraftInput,
   LedgerEntryDetail,
+  LedgerExport,
   LedgerForecast,
   LedgerLinkageResult,
   LedgerProposal,
@@ -567,6 +568,15 @@ export async function getLedgerEntry(entryId: string): Promise<LedgerEntryDetail
     if (err instanceof Error && /not found/i.test(err.message)) return null;
     throw err;
   }
+}
+
+/**
+ * The whole published ledger in one read — what every public ledger page
+ * renders from. Published forecasts only and no proposals, by the tool's own
+ * query; lib/ledger-public.ts filters again regardless.
+ */
+export async function exportLedger(): Promise<LedgerExport> {
+  return callMCPTool<LedgerExport>('web_export_ledger', {});
 }
 
 export async function listLedgerEntries(opts: { include_drafts?: boolean; season?: number | null; limit?: number; offset?: number } = {}): Promise<LedgerForecast[]> {
