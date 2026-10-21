@@ -10,7 +10,9 @@ import type {
   DeskPost,
   DeskPostUpdate,
   DeskSections,
+  DeskSource,
 } from '@/lib/types';
+import { normalizeSources } from '@/lib/desk-sources';
 import { DraftEditor } from './DraftEditor';
 import { LinterRail } from './LinterRail';
 import { AttestationModal } from './AttestationModal';
@@ -48,6 +50,7 @@ export function DeskEditorView({
   const [attestations, setAttestations] = useState(initialAttestations);
   const [sections, setSections] = useState(() => normalizeSections(initialPost.sections));
   const [meta, setMeta] = useState<DeskMeta>(initialPost.meta ?? {});
+  const [sources, setSources] = useState<DeskSource[]>(() => normalizeSources(initialPost.source_attribution));
   const [title, setTitle] = useState(initialPost.title);
   const [blockersPresent, setBlockersPresent] = useState(false);
 
@@ -81,10 +84,12 @@ export function DeskEditorView({
             deskPostId={post.id}
             sections={sections}
             meta={meta}
+            sources={sources}
             title={title}
             status={post.status}
             onSectionsChange={setSections}
             onMetaChange={setMeta}
+            onSourcesChange={setSources}
             onTitleChange={setTitle}
             onSaved={setPost}
           />
@@ -93,7 +98,7 @@ export function DeskEditorView({
         <div className="space-y-4">
           <LinterRail
             deskPostId={post.id}
-            markdown={post.markdown_body}
+            refreshKey={post.version}
             onBlockersChange={setBlockersPresent}
           />
           <AttestationModal

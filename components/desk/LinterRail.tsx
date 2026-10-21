@@ -6,9 +6,11 @@ import type { LintFinding, LintResult } from '@/lib/types';
 interface Props {
   deskPostId: string;
   // Re-lint trigger only — the lint itself reads the PERSISTED post server-side.
-  // Pass the SAVED post's markdown_body (not the editor's in-progress state) so
-  // this fires when a save lands instead of racing it on every keystroke.
-  markdown: string;
+  // Pass the SAVED post's version (not the editor's in-progress state) so this
+  // fires when a save lands instead of racing it on every keystroke. It is the
+  // version and not markdown_body because source_attribution is linted too and
+  // changes nothing in the body: a sources-only save must still re-lint.
+  refreshKey: number;
   onBlockersChange: (hasBlockers: boolean) => void;
 }
 
@@ -37,7 +39,7 @@ function Finding({ finding }: { finding: LintFinding }) {
 // advisory. `classifier_unavailable` is a fail-open warning (the Haiku classifier
 // couldn't run) — never treated as a blocker. Blockers include the kpjmd contract
 // rules (incomplete_sections, markdown_in_section) alongside the framing rules.
-export function LinterRail({ deskPostId, markdown, onBlockersChange }: Props) {
+export function LinterRail({ deskPostId, refreshKey, onBlockersChange }: Props) {
   const [result, setResult] = useState<LintResult | null>(null);
   const [linting, setLinting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +69,7 @@ export function LinterRail({ deskPostId, markdown, onBlockersChange }: Props) {
 
     return () => clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [markdown]);
+  }, [refreshKey]);
 
   const blockers = result?.blockers ?? [];
   const warnings = result?.warnings ?? [];
