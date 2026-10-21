@@ -48,9 +48,14 @@ export async function PATCH(
 
   const { id } = await params;
   const body = (await request.json().catch(() => ({}))) as UpdateBody;
-  if (!body.sections && !body.meta && body.title === undefined) {
+  if (
+    !body.sections &&
+    !body.meta &&
+    body.title === undefined &&
+    body.source_attribution === undefined
+  ) {
     return NextResponse.json(
-      { error: 'at least one of sections, meta, or title is required' },
+      { error: 'at least one of sections, meta, title, or source_attribution is required' },
       { status: 400 },
     );
   }

@@ -2,17 +2,21 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { SECTION_KEYS } from '@/lib/types';
-import type { DeskMeta, DeskPost, DeskPostStatus, DeskSections, SectionKey } from '@/lib/types';
+import type { DeskMeta, DeskPost, DeskPostStatus, DeskSections, DeskSource, SectionKey } from '@/lib/types';
+import { sourcesForSave } from '@/lib/desk-sources';
 import { MetaEditor } from './MetaEditor';
+import { SourcesEditor } from './SourcesEditor';
 
 interface Props {
   deskPostId: string;
   sections: DeskSections;
   meta: DeskMeta;
+  sources: DeskSource[];
   title: string;
   status: DeskPostStatus;
   onSectionsChange: (value: DeskSections) => void;
   onMetaChange: (value: DeskMeta) => void;
+  onSourcesChange: (value: DeskSource[]) => void;
   onTitleChange: (value: string) => void;
   onSaved: (post: DeskPost) => void;
 }
@@ -69,10 +73,12 @@ export function DraftEditor({
   deskPostId,
   sections,
   meta,
+  sources,
   title,
   status,
   onSectionsChange,
   onMetaChange,
+  onSourcesChange,
   onTitleChange,
   onSaved,
 }: Props) {
@@ -102,7 +108,7 @@ export function DraftEditor({
         const res = await fetch(`/api/desk/posts/${deskPostId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sections, meta, title }),
+          body: JSON.stringify({ sections, meta, title, source_attribution: sourcesForSave(sources) }),
         });
         const data = (await res.json().catch(() => ({}))) as { post?: DeskPost; error?: string };
         if (!res.ok || !data.post) throw new Error(data.error ?? 'Save failed');
@@ -120,7 +126,7 @@ export function DraftEditor({
 
     return () => clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sections, meta, title]);
+  }, [sections, meta, title, sources]);
 
   function setSection(key: SectionKey, value: string) {
     onSectionsChange({ ...sections, [key]: value });
@@ -198,6 +204,8 @@ export function DraftEditor({
           );
         })}
       </div>
+
+      <SourcesEditor sources={sources} locked={locked} onChange={onSourcesChange} />
 
       <MetaEditor meta={meta} locked={locked} onChange={onMetaChange} />
 

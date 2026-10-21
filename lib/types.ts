@@ -378,6 +378,12 @@ export interface DeskMeta {
   anatomy_diagram_alt?: string;
 }
 
+// One cited public report. source_attribution is stored as an array of these.
+export interface DeskSource {
+  label: string;
+  url: string;
+}
+
 export interface DeskPost {
   id: string;
   candidate_id: string | null;
