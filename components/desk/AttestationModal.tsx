@@ -12,13 +12,13 @@ interface Props {
   onPublished: (post: DeskPost) => void;
 }
 
-const CONFIRMATIONS = [
+export const CONFIRMATIONS = [
   { key: 'reviewed_source_reports', label: 'I have reviewed the underlying public source reports.' },
   { key: 'edited_for_accuracy', label: 'I have edited this commentary for clinical accuracy.' },
   { key: 'framing_confirmed', label: 'The framing is general educational analysis, not a diagnosis of these athletes.' },
 ] as const;
 
-type ConfirmKey = (typeof CONFIRMATIONS)[number]['key'];
+export type ConfirmKey = (typeof CONFIRMATIONS)[number]['key'];
 
 export function AttestationModal({
   deskPostId,

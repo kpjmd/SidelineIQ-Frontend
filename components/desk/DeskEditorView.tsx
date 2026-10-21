@@ -21,6 +21,7 @@ import { EntityTimelinePanel } from './EntityTimelinePanel';
 import { StaleAttestationBanner } from './StaleAttestationBanner';
 import { ReturnWatchPanel } from './ReturnWatchPanel';
 import { HandoffPanel } from './HandoffPanel';
+import { CorrectTitlePanel } from './CorrectTitlePanel';
 
 // A post predating mcp migration 016 has sections: null. Normalizing to seven
 // empty strings lets the editor open it and re-section it in place; the linter
@@ -61,6 +62,12 @@ export function DeskEditorView({
   const isStale =
     !!latestAttestation &&
     (post.status === 'DRAFT' || post.content_hash !== latestAttestation.content_hash);
+
+  function handleTitleCorrected(next: DeskPost, att: DeskAttestation) {
+    setPost(next);
+    setTitle(next.title);
+    setAttestations((prev) => [att, ...prev]);
+  }
 
   function handleAttested(att: DeskAttestation) {
     setAttestations((prev) => [att, ...prev]);
@@ -111,6 +118,9 @@ export function DeskEditorView({
           />
           <FactValidationPanel context={context} />
           <EntityTimelinePanel updates={context?.updates ?? []} />
+          {post.status === 'PUBLISHED' && (
+            <CorrectTitlePanel post={post} onCorrected={handleTitleCorrected} />
+          )}
           {(post.status === 'PUBLISHED' || post.status === 'RETRACTED') && (
             <HandoffPanel post={post} onConfirmed={setPost} />
           )}

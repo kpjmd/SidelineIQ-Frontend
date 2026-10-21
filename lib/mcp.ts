@@ -16,6 +16,7 @@ import type {
   DeskSections,
   DeskUser,
   KpjmdLiveResult,
+  CorrectTitleResult,
   FeedResponse,
   InjuryEntity,
   InjuryPost,
@@ -320,6 +321,22 @@ export async function deskRetract(
     desk_post_id: deskPostId,
     reviewer_user_id: reviewerUserId,
   });
+}
+
+export interface CorrectTitleInput {
+  desk_post_id: string;
+  reviewer_user_id: string;
+  title: string;
+  reason: string;
+  reviewed_source_reports: boolean;
+  edited_for_accuracy: boolean;
+  framing_confirmed: boolean;
+}
+
+// Correct a PUBLISHED post's title (mcp desk_correct_title). Re-attests the new
+// content hash; the keys must match the tool's strict schema exactly.
+export async function deskCorrectTitle(input: CorrectTitleInput): Promise<CorrectTitleResult> {
+  return callMCPTool<CorrectTitleResult>('desk_correct_title', { ...input });
 }
 
 // Verify the post is actually live on kpjmd.com and record it. The fetch and
