@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { SECTION_KEYS } from '@/lib/types';
+import { seedDraftTitle } from '@/lib/desk-title';
 import type {
   CandidateListItem,
   DeskPost,
@@ -57,7 +58,8 @@ export function DeskList({ initialPosts, acceptedCandidates }: Props) {
       return next;
     });
     try {
-      const title = `${c.athlete_name ?? 'Athlete'} — ${injuryDesc(c) || 'injury update'}`;
+      // The athlete's name only: title_incomplete blocks publishing it as-is.
+      const title = seedDraftTitle(c);
       // Start every section empty rather than seeding placeholder prose: the
       // linter blocks publish on an empty section, so an empty one is impossible
       // to miss, while a seeded one could be published as-is by accident.

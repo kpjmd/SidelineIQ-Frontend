@@ -431,6 +431,15 @@ export interface KpjmdLiveResult {
   post: DeskPost;
 }
 
+// desk_correct_title. attestation is null on a no-op (the stored title again).
+export interface CorrectTitleResult {
+  post: DeskPost;
+  changed: boolean;
+  previous_title: string;
+  previous_content_hash: string;
+  attestation: DeskAttestation | null;
+}
+
 // desk_list rows — DeskPost joined to athlete/injury display fields.
 export interface DeskPostListItem extends DeskPost {
   athlete_name: string | null;

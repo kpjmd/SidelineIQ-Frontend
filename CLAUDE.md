@@ -164,6 +164,14 @@ Two files exist in two repos and must be changed in both:
 threads (+ `[entityId]/reopen`), metrics. `app/api/desk/*`: drafts, posts,
 candidates. `app/api/feed`: PUBLISHED only, ignores query params.
 
+**A published desk title is corrected, never edited.** `DraftEditor` locks the
+title once PUBLISHED; `CorrectTitlePanel` → `posts/[id]/correct-title` → mcp
+`desk_correct_title` is the one post-publish edit. It re-attests (the title is
+inside the content hash), is audited, and leaves kpjmd.com stale until the
+handoff is re-downloaded, fully rebuilt (never `--slug`), rsynced and confirmed.
+New drafts seed the athlete name only (`seedDraftTitle`); mcp's
+`title_incomplete` blocker stops that stub from publishing.
+
 ## The admin dashboard
 
 `components/admin/AdminDashboard.tsx` is a dumb shell: `type Tab = 'reviews' |

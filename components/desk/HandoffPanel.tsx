@@ -51,7 +51,8 @@ export function HandoffPanel({ post, onConfirmed }: Props) {
   const runbook = [
     `mv ~/Downloads/${filename} ~/KPJMD-website/content/injury-desk/published/`,
     `cd ~/KPJMD-website`,
-    `node scripts/build-injury-desk.js --slug=${post.slug}`,
+    // Never --slug: it skips the listing and both sitemaps.
+    `node scripts/build-injury-desk.js`,
     `node scripts/build-links.js`,
     `rsync -avz -e "ssh -i ~/.ssh/id_ed25519" site/public/ root@167.172.157.3:/var/www/kpjmd/`,
     `node scripts/indexnow.js`,
@@ -109,7 +110,7 @@ export function HandoffPanel({ post, onConfirmed }: Props) {
 
       {stage === 'stale' && (
         <p className="text-xs text-amber-400">
-          This post changed since it was last confirmed live (an edit or a Return Watch update).
+          This post changed since it was last confirmed live (a title correction or a Return Watch update).
           The page on kpjmd.com is stale until you rebuild and deploy.
         </p>
       )}
