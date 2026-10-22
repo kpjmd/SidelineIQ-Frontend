@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { SECTION_KEYS } from '@/lib/types';
 import { seedDraftTitle } from '@/lib/desk-title';
+import { partitionDeskPosts } from '@/lib/desk-list';
 import type {
   CandidateListItem,
   DeskPost,
@@ -38,9 +39,34 @@ function injuryDesc(c: { laterality: string | null; body_part: string | null; in
     .join(' ');
 }
 
+function PostRow({ p }: { p: DeskPostListItem }) {
+  return (
+    <Link
+      href={`/desk/${p.id}`}
+      className="block bg-slate-900 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/50 transition-colors"
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-bone truncate">{p.title}</p>
+          <p className="text-xs text-slate-500 truncate mt-0.5">
+            {p.athlete_name ?? 'Unknown'} · {injuryDesc(p) || '—'}
+          </p>
+        </div>
+        <span className={`px-2 py-0.5 rounded text-xs font-semibold border shrink-0 ${statusBadge(p.status)}`}>
+          {p.status}
+        </span>
+        <time className="text-xs text-slate-600 shrink-0">
+          {formatDistanceToNow(new Date(p.updated_at), { addSuffix: true })}
+        </time>
+      </div>
+    </Link>
+  );
+}
+
 export function DeskList({ initialPosts, acceptedCandidates }: Props) {
   const router = useRouter();
   const [posts] = useState(initialPosts);
+  const { active, retracted } = partitionDeskPosts(posts);
   const [candidates, setCandidates] = useState(
     acceptedCandidates.filter((c) => c.candidate_kind !== 'RETURN_WATCH_UPDATE'),
   );
@@ -144,31 +170,22 @@ export function DeskList({ initialPosts, acceptedCandidates }: Props) {
 
       <section className="space-y-3">
         <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Desk posts</h2>
-        {posts.length === 0 ? (
+        {active.length === 0 ? (
           <p className="text-xs text-slate-600">No desk posts yet.</p>
         ) : (
-          posts.map((p) => (
-            <Link
-              key={p.id}
-              href={`/desk/${p.id}`}
-              className="block bg-slate-900 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-bone truncate">{p.title}</p>
-                  <p className="text-xs text-slate-500 truncate mt-0.5">
-                    {p.athlete_name ?? 'Unknown'} · {injuryDesc(p) || '—'}
-                  </p>
-                </div>
-                <span className={`px-2 py-0.5 rounded text-xs font-semibold border shrink-0 ${statusBadge(p.status)}`}>
-                  {p.status}
-                </span>
-                <time className="text-xs text-slate-600 shrink-0">
-                  {formatDistanceToNow(new Date(p.updated_at), { addSuffix: true })}
-                </time>
-              </div>
-            </Link>
-          ))
+          active.map((p) => <PostRow key={p.id} p={p} />)
+        )}
+        {retracted.length > 0 && (
+          <details>
+            <summary className="cursor-pointer text-xs text-slate-500 hover:text-slate-300 select-none">
+              Retracted ({retracted.length})
+            </summary>
+            <div className="space-y-3 mt-3">
+              {retracted.map((p) => (
+                <PostRow key={p.id} p={p} />
+              ))}
+            </div>
+          </details>
         )}
       </section>
     </div>
