@@ -172,6 +172,13 @@ handoff is re-downloaded, fully rebuilt (never `--slug`), rsynced and confirmed.
 New drafts seed the athlete name only (`seedDraftTitle`); mcp's
 `title_incomplete` blocker stops that stub from publishing.
 
+**A published section is corrected the same way.** `CorrectContentPanel` →
+`posts/[id]/correct-published` → mcp `desk_correct_published`: one field at a
+time (a section, prose meta, or one FAQ part; structural meta and the title are
+not offered), re-attested, audited with a per-field diff. The mcp caps the edit
+(150 characters per field) and re-runs the linter, refusing a new blocker;
+`lib/desk-correction.ts` only previews the cap. Same stale-until-rebuilt rule.
+
 ## The admin dashboard
 
 `components/admin/AdminDashboard.tsx` is a dumb shell: `type Tab = 'reviews' |

@@ -440,6 +440,16 @@ export interface CorrectTitleResult {
   attestation: DeskAttestation | null;
 }
 
+// desk_correct_published. diff is keyed by field path ("sections.treatment",
+// "meta.faqs[1].a"); attestation is null on a no-op (the stored content again).
+export interface CorrectContentResult {
+  post: DeskPost;
+  changed: boolean;
+  diff: Record<string, { from: string; to: string; distance: number }>;
+  previous_content_hash: string;
+  attestation: DeskAttestation | null;
+}
+
 // desk_list rows — DeskPost joined to athlete/injury display fields.
 export interface DeskPostListItem extends DeskPost {
   athlete_name: string | null;

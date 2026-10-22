@@ -16,6 +16,7 @@ import type {
   DeskSections,
   DeskUser,
   KpjmdLiveResult,
+  CorrectContentResult,
   CorrectTitleResult,
   FeedResponse,
   InjuryEntity,
@@ -46,6 +47,7 @@ import type {
 } from './ledger-types';
 import type { CtaClickSummary, ManualMetric, MetricSnapshot } from './metrics-summary';
 import type { CtaLink } from './cta-click';
+import type { CorrectPublishedBody } from './desk-correction';
 
 const WEB_MCP_URL = process.env.WEB_MCP_URL!;
 const MCP_AUTH_SECRET = process.env.MCP_AUTH_SECRET;
@@ -337,6 +339,17 @@ export interface CorrectTitleInput {
 // content hash; the keys must match the tool's strict schema exactly.
 export async function deskCorrectTitle(input: CorrectTitleInput): Promise<CorrectTitleResult> {
   return callMCPTool<CorrectTitleResult>('desk_correct_title', { ...input });
+}
+
+export interface CorrectContentInput extends CorrectPublishedBody {
+  desk_post_id: string;
+  reviewer_user_id: string;
+}
+
+// Correct a small error in a PUBLISHED post's sections or prose meta (mcp
+// desk_correct_published). Re-attests; size-capped and re-linted server-side.
+export async function deskCorrectPublished(input: CorrectContentInput): Promise<CorrectContentResult> {
+  return callMCPTool<CorrectContentResult>('desk_correct_published', { ...input });
 }
 
 // Verify the post is actually live on kpjmd.com and record it. The fetch and
