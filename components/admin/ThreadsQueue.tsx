@@ -9,8 +9,10 @@ import type {
 } from '@/lib/types';
 import { SportBadge } from '@/components/shared/SportBadge';
 import { computeAccuracyStats } from '@/lib/accuracy-stats';
+import { describeReturnHold } from '@/lib/return-hold';
 
-type View = 'active' | 'date_review' | 'accuracy';
+type View = 'active' | 'date_review' | 'return_candidates' | 'accuracy';
+type ListView = Exclude<View, 'accuracy'>;
 
 interface Props {
   initialActive: ThreadListItem[];
@@ -41,12 +43,15 @@ const fmtDate = (d: string | null | undefined): string => (d ? d.slice(0, 10) : 
 // MD dashboard "Threads" tab. Three sub-views over injury_entities:
 //   active       — open threads: trajectory, projection, edit-dates + close
 //   date_review  — threads with unresolved dates awaiting MD manual input
+//   return_candidates — ACTIVE threads the return detector found a game for and
+//                  declined to close: confirm the return, correct the date, or void
 //   accuracy     — closed threads with the OTM projection-vs-actual record
 export function ThreadsQueue({ initialActive }: Props) {
   const [view, setView] = useState<View>('active');
   const [byView, setByView] = useState<Record<View, ThreadListItem[] | null>>({
     active: initialActive,
     date_review: null,
+    return_candidates: null,
     accuracy: null,
   });
   const [loading, setLoading] = useState(false);
@@ -77,10 +82,22 @@ export function ThreadsQueue({ initialActive }: Props) {
     void load(view);
   }
 
+  // A change here moves the thread out of the other open lists too, so drop them.
+  function onThreadChanged() {
+    setByView((prev) => ({
+      ...prev,
+      ...(view !== 'active' && { active: null }),
+      ...(view !== 'date_review' && { date_review: null }),
+      ...(view !== 'return_candidates' && { return_candidates: null }),
+    }));
+    void load(view);
+  }
+
   const threads = byView[view] ?? [];
   const tabs: [View, string][] = [
     ['active', 'Active'],
     ['date_review', 'Date review'],
+    ['return_candidates', 'Return candidates'],
     ['accuracy', 'Accuracy'],
   ];
 
@@ -123,7 +140,7 @@ export function ThreadsQueue({ initialActive }: Props) {
           }}
         />
       ) : (
-        <ThreadList threads={threads} view={view} loading={loading} onChanged={refreshCurrent} />
+        <ThreadList threads={threads} view={view} loading={loading} onChanged={onThreadChanged} />
       )}
     </div>
   );
@@ -136,7 +153,7 @@ function ThreadList({
   onChanged,
 }: {
   threads: ThreadListItem[];
-  view: 'active' | 'date_review';
+  view: ListView;
   loading: boolean;
   onChanged: () => void;
 }) {
@@ -146,7 +163,13 @@ function ThreadList({
   if (threads.length === 0) {
     return (
       <div className="text-center py-12 text-slate-500">
-        <p>{view === 'date_review' ? 'No threads awaiting date review.' : 'No active threads.'}</p>
+        <p>
+          {view === 'date_review'
+            ? 'No threads awaiting date review.'
+            : view === 'return_candidates'
+              ? 'No return candidates.'
+              : 'No active threads.'}
+        </p>
       </div>
     );
   }
@@ -165,7 +188,7 @@ function ThreadCard({
   onChanged,
 }: {
   thread: ThreadListItem;
-  view: 'active' | 'date_review';
+  view: ListView;
   onChanged: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -178,7 +201,8 @@ function ThreadCard({
   const [injuryDate, setInjuryDate] = useState(asDateInput(thread.injury_date));
   const [confidence, setConfidence] = useState<DateConfidence>(thread.injury_date_confidence);
   // close form
-  const [returnDate, setReturnDate] = useState('');
+  const hold = thread.return_hold ?? null;
+  const [returnDate, setReturnDate] = useState(asDateInput(hold?.candidate_return_date));
 
   async function toggle() {
     const next = !expanded;
@@ -213,6 +237,18 @@ function ThreadCard({
     }
   }
 
+  function voidThread() {
+    const reason = window.prompt(
+      `Void ${thread.athlete_name ?? 'this thread'}? It cannot be reopened and gets no accuracy record. Say why.`,
+    );
+    if (reason == null) return;
+    if (!reason.trim()) {
+      setError('A reason is required.');
+      return;
+    }
+    void post({ action: 'close', outcome: 'VOID', void_reason: reason.trim() });
+  }
+
   const proj = thread.otm_projection;
 
   return (
@@ -243,6 +279,20 @@ function ThreadCard({
       </button>
 
       {error && <p className="px-4 pb-3 -mt-1 text-xs text-red-400">{error}</p>}
+
+      {hold && (
+        <p className="px-4 pb-3 -mt-1 text-xs text-amber-300">
+          Candidate game{' '}
+          {hold.game_url ? (
+            <a href={hold.game_url} target="_blank" rel="noreferrer" className="underline">
+              {fmtDate(hold.candidate_return_date)}
+            </a>
+          ) : (
+            fmtDate(hold.candidate_return_date)
+          )}
+          . {describeReturnHold(hold)}
+        </p>
+      )}
 
       {expanded && (
         <div className="px-4 pb-4 border-t border-slate-800 space-y-4">
@@ -332,8 +382,8 @@ function ThreadCard({
             </div>
           </div>
 
-          {/* Close-thread action (active view) */}
-          {view === 'active' && (
+          {/* Close-thread action (active and return-candidate views) */}
+          {(view === 'active' || view === 'return_candidates') && (
             <div className="rounded border border-slate-800 p-3 space-y-2">
               <p className="text-xs font-medium text-slate-400">Close thread (athlete returned)</p>
               <div className="flex flex-wrap items-center gap-2">
@@ -357,6 +407,15 @@ function ThreadCard({
                 >
                   Retired
                 </button>
+                {view === 'return_candidates' && (
+                  <button
+                    onClick={voidThread}
+                    disabled={busy}
+                    className="px-3 py-1 text-xs font-medium rounded bg-red-900/60 text-red-200 hover:bg-red-800 disabled:opacity-50 transition-colors"
+                  >
+                    Void
+                  </button>
+                )}
               </div>
             </div>
           )}
