@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { listThreads } from '@/lib/mcp';
 import { requireMd } from '@/lib/desk-auth';
 
-// GET /api/admin/threads?view=active|date_review|closed
+// GET /api/admin/threads?view=active|date_review|return_candidates|closed
 // Backs the MD dashboard "Threads" tab. Session-gated (requireMd) like every
 // other /api/admin/* handler — proxy.ts does not match /api/*.
 export async function GET(request: NextRequest) {
@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
     let threads;
     if (view === 'date_review') {
       threads = await listThreads({ status: 'ACTIVE', needs_date_review: true });
+    } else if (view === 'return_candidates') {
+      threads = await listThreads({ return_candidates: true });
     } else if (view === 'closed') {
       const [resolved, retired] = await Promise.all([
         listThreads({ status: 'RESOLVED' }),

@@ -33,6 +33,8 @@ export type FetchThreadPage = (args: Record<string, unknown>) => Promise<ThreadP
 export interface ThreadFilters {
   status?: ThreadListItem['status'];
   needs_date_review?: boolean;
+  /** Needs the mcp to declare it: inputs are strict, so an older one fails the call. */
+  return_candidates?: boolean;
 }
 
 /** The server's own maximum. Fewer round trips, same answer. */
@@ -57,6 +59,7 @@ export async function listAllThreadPages(
   const base: Record<string, unknown> = { limit: pageSize };
   if (filters.status) base.status = filters.status;
   if (filters.needs_date_review !== undefined) base.needs_date_review = filters.needs_date_review;
+  if (filters.return_candidates) base.return_candidates = true;
 
   const out: ThreadListItem[] = [];
   const seen = new Set<string>();

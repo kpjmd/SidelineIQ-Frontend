@@ -286,7 +286,20 @@ export interface InjuryEntity {
 }
 
 // Shape returned by web_list_threads (entity joined with athlete/team display).
+/** The return detector's latest hold on a thread. */
+export interface ThreadReturnHold {
+  action: 'return_before_first_report' | 'return_before_credible_window';
+  candidate_return_date: string | null;
+  game_url: string | null;
+  first_report_date: string | null;
+  earliest_credible_return: string | null;
+  injury_date: string | null;
+  at: string;
+}
+
 export interface ThreadListItem {
+  /** Present only on the return-candidates view. */
+  return_hold?: ThreadReturnHold | null;
   id: string;
   player_id: string;
   athlete_name: string | null;
