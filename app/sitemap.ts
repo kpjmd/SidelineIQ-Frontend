@@ -3,6 +3,12 @@ import { listPosts, exportLedger } from '@/lib/mcp';
 import { entriesForRow, latestPerEntry, publicLedger, rowKeysWithEntries, versionsOf } from '@/lib/ledger-public';
 import { siteUrl as resolveSite } from '@/lib/site-url';
 
+// Without this the sitemap is rendered once at build time and frozen until the
+// next deploy: on 2026-11-15 the live sitemap's newest post was 2026-11-04, the
+// last deploy. Hourly, not the 60s the pages use, because each render pages
+// through every published post (~15 MCP calls) and crawlers read it rarely.
+export const revalidate = 3600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = resolveSite();
 
